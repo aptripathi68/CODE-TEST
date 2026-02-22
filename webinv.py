@@ -132,6 +132,36 @@ def append_stock(selected_row, source, vendor_name, make,
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
 
+insert_values = (
+    selected_row["Item Master ID"],
+    selected_row["Item Description"],
+    selected_row["Grade Name"],
+    selected_row["Group1 Name"],
+    selected_row["Group2 Name"],
+    selected_row["Section Name"],
+    selected_row["Unit Wt. (kg/m)"],
+    source,
+    vendor_name,
+    make,
+    vehicle_number,
+    str(invoice_date) if invoice_date else None,
+    project_name,
+    thickness if thickness is not None else None,
+    length if length is not None else None,
+    width if width is not None else None,
+    qr_code if qr_code else None,
+    snapshot_path if snapshot_path else None,
+    latitude if latitude is not None else None,
+    longitude if longitude is not None else None,
+    rack if rack is not None else None,
+    shelf if shelf is not None else None,
+    quantity if quantity is not None else None,
+    price if price is not None else None,
+    str(stock_date) if stock_date else None,
+    added_by if added_by else ""
+)
+
+st.write("DEBUG INSERT VALUES:", insert_values)                     
     cursor.execute("""
     INSERT INTO inventory (
         item_master_id,
