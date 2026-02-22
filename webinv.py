@@ -590,7 +590,7 @@ if st.button("➕ Add Stock"):
     if quantity <= 0 or price <= 0:
         st.error("❌ Quantity and Price must be greater than 0")
     else:
-        # Clean values
+        # Clean selected_row values
         for col in ["Item Master ID", "Item Description", "Grade Name",
                     "Group1 Name", "Group2 Name", "Section Name", "Unit Wt. (kg/m)"]:
             selected_row[col] = clean_value(selected_row[col])
@@ -626,7 +626,7 @@ if st.button("➕ Add Stock"):
             st.session_state.pop("gps_value", None)
 
             st.success("✅ Stock entry successful!")
-            st.rerun()
+            st.rerun()  # Only once
 
         except Exception as e:
             st.error(f"❌ Failed to add stock: {e}")
@@ -637,13 +637,6 @@ stock_df = load_stock_data()  # fetch fresh data
 # Clear QR & GPS to prevent duplicates
 st.session_state.pop("qr_value", None)
 st.session_state.pop("gps_value", None)
-
-st.success("✅ Stock entry successful!")
-st.rerun()
-
-        # Clear QR & GPS to prevent duplicates
-        st.session_state.pop("qr_value", None)
-        st.session_state.pop("gps_value", None)
 
 
 
