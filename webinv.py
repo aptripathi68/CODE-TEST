@@ -41,6 +41,9 @@ def verify_login(username, password):
 
 # ---------- Helper Functions ----------
 
+DB_FILE = "inventory.db"
+MASTER_FILE = "Item_master.xlsx"
+
 def initialize_database():
     """Create inventory table if it doesn't exist."""
     conn = sqlite3.connect(DB_FILE)
