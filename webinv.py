@@ -603,9 +603,9 @@ if st.button("➕ Add Stock"):
         snapshot_path = None
         if snapshot:
             from datetime import datetime
+            os.makedirs("images", exist_ok=True)
             if qr_code:
                 safe_qr = qr_code.strip().replace("/", "_").replace("\\", "_").replace(" ", "_").replace(":", "_")
-                from datetime import datetime
                 snapshot_path = f"images/{safe_qr}_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg"
             else:
                 snapshot_path = f"images/photo_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg"
@@ -628,19 +628,21 @@ if st.button("➕ Add Stock"):
         except Exception as e:
             st.error(f"❌ Failed to add stock: {e}")
 
+# Reload stock after adding
+stock_df = load_stock_data()  # fetch fresh data
+
+# Clear QR & GPS to prevent duplicates
+st.session_state.pop("qr_value", None)
+st.session_state.pop("gps_value", None)
+
+st.success("✅ Stock entry successful!")
+st.rerun()
+
         # Clear QR & GPS to prevent duplicates
         st.session_state.pop("qr_value", None)
         st.session_state.pop("gps_value", None)
 
- # Reload stock after adding
-stock_df = load_stock_data()  # fetch fresh data
-st.success("✅ Stock entry successful!")
 
-# Clear QR & GPS
-st.session_state.pop("qr_value", None)
-st.session_state.pop("gps_value", None)
-
-st.rerun()
 
     # ---------- Delete Section ----------
 
