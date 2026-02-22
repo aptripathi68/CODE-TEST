@@ -83,17 +83,13 @@ def clean_value(val):
 
 # ---------- INITIALIZE USERS TABLE ----------
 
-def initialize_database():
-    """Drop old inventory table and create a fresh one with updated schema."""
+def initialize_database_safe():
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-
-    # Drop old table if exists
-    cursor.execute("DROP TABLE IF EXISTS inventory")
-
-    # Create table with all required columns
+    
+    # Only create table if it doesn't exist
     cursor.execute("""
-        CREATE TABLE inventory (
+        CREATE TABLE IF NOT EXISTS inventory (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             item_master_id TEXT,
             item_description TEXT,
@@ -123,10 +119,9 @@ def initialize_database():
             added_by TEXT
         )
     """)
-
     conn.commit()
     conn.close()
-
+    
 
 def append_stock(selected_row, source, vendor_name, make,
                  vehicle_number, invoice_date, project_name,
@@ -249,8 +244,10 @@ def delete_stock_row(row_id, username, role):
     conn.close()
 
 # Database initialization
-initialize_database()
-initialize_users_table()
+# Initialize database only if file does not exist
+if not os.path.exists(DB_FILE):
+    initialize_database()
+    initialize_users_table()
 
 
 # ---------- Streamlit Interface ----------
