@@ -39,7 +39,7 @@ def check_login(username, password):
 
 
 # File paths
-STOCK_FILE = DB_FILE = "inventory.db"
+DB_FILE = "inventory.db"
 MASTER_FILE = "Item_master.xlsx"
 
 def initialize_users_table():
@@ -80,7 +80,9 @@ def initialize_database():
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
 
-    cursor.execute("""
+    
+# Create table if not exists
+     cursor.execute("""
     CREATE TABLE IF NOT EXISTS inventory (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         item_master_id TEXT,
@@ -107,12 +109,25 @@ def initialize_database():
         shelf INTEGER,
         quantity REAL,
         price REAL,
-        stock_date TEXT
+        stock_date TEXT,
+        added_by TEXT
     )
-""")
+    """)
+
+    # Check if column exists (for old DB)
+    cursor.execute("PRAGMA table_info(inventory)")
+    columns = [col[1] for col in cursor.fetchall()]
+
+    if "added_by" not in columns:
+        cursor.execute("ALTER TABLE inventory ADD COLUMN added_by TEXT")
 
     conn.commit()
     conn.close()
+    cursor.execute("PRAGMA table_info(inventory)")
+columns = [col[1] for col in cursor.fetchall()]
+
+if "added_by" not in columns:
+    cursor.execute("ALTER TABLE inventory ADD COLUMN added_by TEXT")
 
 def append_stock(selected_row, source, vendor_name, make,
                  vehicle_number, invoice_date, project_name,
@@ -150,8 +165,9 @@ INSERT INTO inventory (
     shelf,
     quantity,
     price,
-    stock_date
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    stock_date,
+    added_by
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """, (
     selected_row["Item Master ID"],
     selected_row["Item Description"],
@@ -177,7 +193,8 @@ INSERT INTO inventory (
     shelf,
     quantity,
     price,
-    str(stock_date)
+    str(stock_date),
+    st.session_state.username
 ))
 
     conn.commit()
@@ -281,29 +298,94 @@ with col2:
 if st.session_state.role == "admin":
     st.sidebar.markdown("### 👨‍💼 Admin Panel")
 
-    # Create User
+  # ---------------- CREATE USER ----------------
     new_user = st.sidebar.text_input("New Username")
-    if st.sidebar.button("Create User"):
 
-        default_password = hashlib.sha256("123456".encode()).hexdigest()
+   if st.sidebar.button("Create User"):
 
-        conn = sqlite3.connect(DB_FILE)
-        cursor = conn.cursor()
+    if not new_user.strip():
+        st.sidebar.error("Username cannot be empty")
+        st.stop()
 
-        try:
-            cursor.execute("""
-    INSERT INTO users (username, password, role, must_change_password)
-    VALUES (?, ?, ?, ?)
-""", (new_user, default_password, "user", 1))
-            conn.commit()
-            st.sidebar.success("User created! Default password: 123456")
+    default_password = hashlib.sha256("123456".encode()).hexdigest()
 
-        except:
-            st.sidebar.error("User already exists")
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
 
-        conn.close()
-# User Management
+    try:
+        cursor.execute("""
+            INSERT INTO users (username, password, role, must_change_password)
+            VALUES (?, ?, ?, ?)
+        """, (new_user, default_password, "user", 1))
+        conn.commit()
+        st.sidebar.success("User created! Default password: 123456")
+    except:
+        st.sidebar.error("User already exists")
+
+    conn.close()
+
+    # ---------------- USER MANAGEMENT ----------------
     st.subheader("👤 User Management")
+
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, username, role FROM users")
+    users = cursor.fetchall()
+    conn.close()
+
+    if users:
+
+        user_df = pd.DataFrame(users, columns=["ID", "Username", "Role"])
+        st.dataframe(user_df, use_container_width=True)
+
+        selected_user = st.selectbox(
+            "Select User",
+            user_df["Username"]
+        )
+
+        col1, col2 = st.columns(2)
+
+        # 🔑 RESET PASSWORD
+        with col1:
+            if st.button("🔑 Reset Password"):
+
+                default_password = hashlib.sha256("123456".encode()).hexdigest()
+
+                conn = sqlite3.connect(DB_FILE)
+                cursor = conn.cursor()
+
+                cursor.execute("""
+                    UPDATE users
+                    SET password = ?, must_change_password = 1
+                    WHERE username = ?
+                """, (default_password, selected_user))
+
+                conn.commit()
+                conn.close()
+
+                st.success("Password reset to default (123456).")
+                st.rerun()
+
+        # ❌ DELETE USER
+        with col2:
+            if st.button("❌ Delete User"):
+
+                if selected_user == "admin":
+                    st.error("Admin account cannot be deleted.")
+                elif selected_user == st.session_state.username:
+                    st.error("You cannot delete yourself.")
+                else:
+                    conn = sqlite3.connect(DB_FILE)
+                    cursor = conn.cursor()
+                    cursor.execute("DELETE FROM users WHERE username = ?", (selected_user,))
+                    conn.commit()
+                    conn.close()
+
+                    st.success("User deleted successfully.")
+                    st.rerun()
+
+    else:
+        st.info("No users found.")
     
 
 st.title("📦 Stock Entry System")
@@ -577,15 +659,14 @@ if st.button("➕ Add Stock"):
 
     # ---------- Delete Section ----------
 
-# Display current stock
 st.subheader("📊 Current Stock")
 stock_df = load_stock_data()
 
 if not stock_df.empty:
 
-   st.dataframe(display_df)
+    st.dataframe(stock_df, use_container_width=True)
 
-    # 🔹 Single Row Delete (Both Admin & User)
+    # 🔹 Single Row Delete (VISIBLE TO ALL)
     st.subheader("🗑 Delete Single Stock Entry")
 
     row_to_delete = st.selectbox(
@@ -598,23 +679,10 @@ if not stock_df.empty:
         st.success("Deleted successfully")
         st.rerun()
 
-    # 🔐 ADMIN DELETE SECTION
-    
+    # 🔐 BULK DELETE (ADMIN ONLY)
     if st.session_state.role == "admin":
 
-        st.markdown("### 🗑 Delete Stock Entry")
-
-        row_to_delete = st.selectbox(
-            "Select ID to Delete",
-            stock_df["id"]
-        )
-
-        if st.button("Delete Selected Entry"):
-            delete_stock_row(row_to_delete)
-            st.success("✅ Stock entry deleted successfully!")
-            st.rerun()
-
-        st.markdown("### 🗑 Bulk Delete (By ID Range)")
+        st.markdown("### 🚨 Bulk Delete (Admin Only)")
 
         min_id = int(stock_df["id"].min())
         max_id = int(stock_df["id"].max())
