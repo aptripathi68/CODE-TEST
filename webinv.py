@@ -132,79 +132,85 @@ def append_stock(selected_row, source, vendor_name, make,
                  quantity, price, stock_date,
                  added_by):
 
-    # Ensure added_by is never None
     if not added_by:
         added_by = ""
 
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
+    # Convert numpy types to Python native types
+    def to_native(val):
+        import numpy as np
+        if isinstance(val, (np.integer, np.int64)):
+            return int(val)
+        elif isinstance(val, (np.floating, np.float64)):
+            return float(val)
+        return val
 
     insert_values = (
-        selected_row["Item Master ID"],
-        selected_row["Item Description"],
-        selected_row["Grade Name"],
-        selected_row["Group1 Name"],
-        selected_row["Group2 Name"],
-        selected_row["Section Name"],
-        selected_row["Unit Wt. (kg/m)"],
-        source,
-        vendor_name,
-        make,
-        vehicle_number,
+        to_native(selected_row["Item Master ID"]),
+        to_native(selected_row["Item Description"]),
+        to_native(selected_row["Grade Name"]),
+        to_native(selected_row["Group1 Name"]),
+        to_native(selected_row["Group2 Name"]),
+        to_native(selected_row["Section Name"]),
+        to_native(selected_row["Unit Wt. (kg/m)"]),
+        to_native(source),
+        to_native(vendor_name),
+        to_native(make),
+        to_native(vehicle_number),
         str(invoice_date) if invoice_date else None,
-        project_name,
-        thickness if thickness is not None else None,
-        length if length is not None else None,
-        width if width is not None else None,
-        qr_code if qr_code else None,
-        snapshot_path if snapshot_path else None,
-        latitude if latitude is not None else None,
-        longitude if longitude is not None else None,
-        rack if rack is not None else None,
-        shelf if shelf is not None else None,
-        quantity if quantity is not None else None,
-        price if price is not None else None,
+        to_native(project_name),
+        to_native(thickness) if thickness is not None else None,
+        to_native(length) if length is not None else None,
+        to_native(width) if width is not None else None,
+        to_native(qr_code) if qr_code else None,
+        to_native(snapshot_path) if snapshot_path else None,
+        to_native(latitude) if latitude is not None else None,
+        to_native(longitude) if longitude is not None else None,
+        to_native(rack) if rack is not None else None,
+        to_native(shelf) if shelf is not None else None,
+        to_native(quantity) if quantity is not None else None,
+        to_native(price) if price is not None else None,
         str(stock_date) if stock_date else None,
-        added_by if added_by else ""
+        to_native(added_by) if added_by else ""
     )
 
-    # Debug: show what values are going to be inserted
-    st.write("DEBUG INSERT VALUES:", insert_values)
+    # Debug
+    st.write("DEBUG INSERT VALUES (converted to native):", insert_values)
 
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
     cursor.execute("""
-    INSERT INTO inventory (
-        item_master_id,
-        item_description,
-        grade_name,
-        group1_name,
-        group2_name,
-        section_name,
-        unit_weight,
-        source,
-        vendor_name,
-        make,
-        vehicle_number,
-        invoice_date,
-        project_name,
-        thickness,
-        length,
-        width,
-        qr_code,
-        snapshot,
-        latitude,
-        longitude,
-        rack,
-        shelf,
-        quantity,
-        price,
-        stock_date,
-        added_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO inventory (
+            item_master_id,
+            item_description,
+            grade_name,
+            group1_name,
+            group2_name,
+            section_name,
+            unit_weight,
+            source,
+            vendor_name,
+            make,
+            vehicle_number,
+            invoice_date,
+            project_name,
+            thickness,
+            length,
+            width,
+            qr_code,
+            snapshot,
+            latitude,
+            longitude,
+            rack,
+            shelf,
+            quantity,
+            price,
+            stock_date,
+            added_by
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, insert_values)
-
     conn.commit()
     conn.close()
-
+                     
 def load_master_data():
     df = pd.read_excel(MASTER_FILE)
     df.columns = df.columns.str.strip()
