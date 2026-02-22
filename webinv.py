@@ -613,30 +613,34 @@ if st.button("➕ Add Stock"):
 
         # Insert into DB
         try:
-            append_stock(
-                selected_row, source, vendor_name, make,
-                vehicle_number, invoice_date, project_name,
-                thickness, length, width,
-                qr_code, snapshot_path,
-                latitude, longitude,
-                rack, shelf,
-                quantity, price, stock_date,
-                st.session_state.get("username")
-            )
+    append_stock(
+        selected_row, source, vendor_name, make,
+        vehicle_number, invoice_date, project_name,
+        thickness, length, width,
+        qr_code, snapshot_path,
+        latitude, longitude,
+        rack, shelf,
+        quantity, price, stock_date,
+        st.session_state.get("username")
+    )
+    st.session_state.pop("qr_value", None)
+    st.session_state.pop("gps_value", None)
 
-            # Clear QR & GPS immediately
-            st.session_state.pop("qr_value", None)
-            st.session_state.pop("gps_value", None)
+    st.success("✅ Stock entry successful!")
+    st.session_state["stock_added"] = True
 
-            st.success("✅ Stock entry successful!")
-            st.rerun()  # Only once
-
-        except Exception as e:
-            st.error(f"❌ Failed to add stock: {e}")
+except Exception as e:
+    st.error(f"❌ Failed to add stock: {e}")
+    import traceback
+    st.error(traceback.format_exc())
 
 
 # ---------- Current Stock & Delete Section ----------
-stock_df = load_stock_data()
+if st.session_state.get("stock_added"):
+    stock_df = load_stock_data()
+    st.session_state["stock_added"] = False
+else:
+    stock_df = load_stock_data()
 
 st.subheader("📊 Current Stock")
 if not stock_df.empty:
