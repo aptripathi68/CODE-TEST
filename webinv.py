@@ -314,7 +314,7 @@ if st.session_state.get("role") == "admin":
                 conn.commit()
                 st.sidebar.success("User created! Default password: 123456")
             except sqlite3.IntegrityError:
-    except sqlite3.IntegrityError:
+except sqlite3.IntegrityError:
     st.sidebar.error("User already exists")
 
             conn.close()
@@ -670,15 +670,14 @@ if not stock_df.empty:
         stock_df["id"]
     )
 
-   if st.button("Delete Selected Entry"):
-        delete_stock_row(
+if st.button("Delete Selected Entry"):
+    delete_stock_row(
         row_to_delete,
         st.session_state.get("username"),
         st.session_state.get("role")
     )
     st.success("Deleted successfully")
     st.rerun()
-
        
     # 🔐 BULK DELETE (ADMIN ONLY)
     if st.session_state.get("role") == "admin":
