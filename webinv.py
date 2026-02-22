@@ -203,7 +203,7 @@ if not st.session_state.logged_in:
             st.session_state.username = username
             st.session_state.role = role
             st.success("Login Successful!")
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("Invalid Username or Password")
 
