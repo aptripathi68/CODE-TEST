@@ -436,10 +436,39 @@ selected_item_index = st.selectbox(
 
 selected_row = filtered_grade.loc[selected_item_index]
 
-# ---------- Dimension Fields ----------
-thickness = st.number_input("Thickness (mm)", value=None, placeholder="Enter thickness")
-length = st.number_input("Length (Meters)", value=None, placeholder="Enter length")
-width = st.number_input("Width (Meters)", value=None, placeholder="Enter width")
+# ---------- Initialize session state keys ----------
+for key, default in {
+    "thickness": 0.0,
+    "length": 0.0,
+    "width": 0.0,
+    "vendor_name": "",
+    "make": "",
+    "vehicle_number": "",
+    "project_name": "",
+    "source": "Spare RM",
+    "quantity": 1.0,
+    "price": 0.0,
+    "qr_value": "",
+    "gps_value": ""
+}.items():
+    if key not in st.session_state:
+        st.session_state[key] = default
+
+# ---------- Now define your stock entry input fields ----------
+thickness = st.number_input("Thickness", min_value=0.0, step=0.01, value=st.session_state["thickness"], key="thickness")
+length = st.number_input("Length (Meters)", min_value=0.0, step=0.01, value=st.session_state["length"], key="length")
+width = st.number_input("Width (Meters)", min_value=0.0, step=0.01, value=st.session_state["width"], key="width")
+
+vendor_name = st.text_input("Vendor Name", value=st.session_state["vendor_name"], key="vendor_name")
+make = st.text_input("Make", value=st.session_state["make"], key="make")
+vehicle_number = st.text_input("Vehicle Number", value=st.session_state["vehicle_number"], key="vehicle_number")
+project_name = st.text_input("Project Name", value=st.session_state["project_name"], key="project_name")
+
+source_options = ["Spare RM", "Project Inventory", "Off-Cut"]
+source = st.selectbox("Select Source", source_options, index=source_options.index(st.session_state["source"]), key="source")
+
+quantity = st.number_input("Enter Quantity", min_value=1.0, step=1.0, value=st.session_state["quantity"], key="quantity")
+price = st.number_input("Enter Price per unit", min_value=0.0, step=0.01, value=st.session_state["price"], key="price")
 
 
 # ---------- PROFESSIONAL QR SCANNER ----------
