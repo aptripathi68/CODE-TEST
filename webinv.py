@@ -11,6 +11,11 @@ import os
 import sqlite3
 import hashlib
 
+
+# ---------- Debug / Dev Mode ----------
+DEBUG_MODE = False  # Change to True to see insert debug info
+
+
 # ---------- Multi level  Authentication ----------
 
 def check_login(username, password):
@@ -173,10 +178,10 @@ def append_stock(selected_row, source, vendor_name, make,
         to_native(added_by) if added_by else ""
     )
 
-    DEBUG_MODE = False  # set True for development
+    
 
 if DEBUG_MODE:
-    st.write("DEBUG INSERT VALUES:", insert_values)
+    st.write("DEBUG INSERT VALUES (converted to native):", insert_values)
 
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
