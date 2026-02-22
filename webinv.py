@@ -590,12 +590,11 @@ if st.button("➕ Add Stock"):
     if quantity <= 0 or price <= 0:
         st.error("❌ Quantity and Price must be greater than 0")
     else:
-        # --- Clean selected_row values ---
-        for col in ["Item Master ID", "Item Description", "Grade Name", 
+        # Clean values
+        for col in ["Item Master ID", "Item Description", "Grade Name",
                     "Group1 Name", "Group2 Name", "Section Name", "Unit Wt. (kg/m)"]:
             selected_row[col] = clean_value(selected_row[col])
 
-        # Get latest QR
         qr_code = st.session_state.get("qr_value")
 
         # Save snapshot
@@ -603,15 +602,13 @@ if st.button("➕ Add Stock"):
         if snapshot:
             from datetime import datetime
             os.makedirs("images", exist_ok=True)
-            if qr_code:
-                safe_qr = qr_code.strip().replace("/", "_").replace("\\", "_").replace(" ", "_").replace(":", "_")
-                snapshot_path = f"images/{safe_qr}_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg"
-            else:
-                snapshot_path = f"images/photo_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg"
+            safe_name = qr_code.strip().replace("/", "_").replace("\\", "_")\
+                        .replace(" ", "_").replace(":", "_") if qr_code else "photo"
+            snapshot_path = f"images/{safe_name}_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg"
             with open(snapshot_path, "wb") as f:
                 f.write(snapshot.getbuffer())
 
-        # Append to DB
+        # Insert into DB
         try:
             append_stock(
                 selected_row, source, vendor_name, make,
@@ -624,15 +621,12 @@ if st.button("➕ Add Stock"):
                 st.session_state.get("username")
             )
 
-            # Clear QR & GPS to prevent duplicates
+            # Clear QR & GPS immediately
             st.session_state.pop("qr_value", None)
             st.session_state.pop("gps_value", None)
 
             st.success("✅ Stock entry successful!")
-
-            # Reload stock after adding
-            stock_df = load_stock_data()
-            st.rerun()  # only rerun once
+            st.rerun()
 
         except Exception as e:
             st.error(f"❌ Failed to add stock: {e}")
