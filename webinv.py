@@ -122,7 +122,8 @@ def append_stock(selected_row, source, vendor_name, make,
                  qr_code, snapshot_path,
                  latitude, longitude,
                  rack, shelf,
-                 quantity, price, stock_date):
+                 quantity, price, stock_date,
+                 added_by):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
 
@@ -181,7 +182,7 @@ INSERT INTO inventory (
     quantity,
     price,
     str(stock_date),
-    st.session_state.username
+    added_by
 ))
 
     conn.commit()
@@ -204,14 +205,16 @@ def load_stock_data():
     return df
 
 
-def delete_stock_row(row_id):
+def delete_stock_row(row_id, username, role):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
+
     cursor.execute("""
-DELETE FROM inventory 
-WHERE id = ? 
-AND (added_by = ? OR ? = 'admin')
-""", (row_id, st.session_state.username, st.session_state.role))
+        DELETE FROM inventory 
+        WHERE id = ? 
+        AND (added_by = ? OR ? = 'admin')
+    """, (row_id, username, role))
+
     conn.commit()
     conn.close()
 
@@ -286,7 +289,7 @@ with col2:
 
 #----------Admin User Creation Panel----------
 
-if st.session_state.role == "admin":
+if st.session_state.get("role") == "admin":
 
     st.sidebar.markdown("### 👨‍💼 Admin Panel")
 
@@ -618,26 +621,27 @@ if st.button("➕ Add Stock"):
 
         # Insert into database (ALWAYS inside button block)
         append_stock(
-            selected_row,
-            source,
-            vendor_name,
-            make,
-            vehicle_number,
-            invoice_date,
-            project_name,
-            thickness,
-            length,
-            width,
-            qr_code if qr_code else None,
-            snapshot_path,
-            latitude,
-            longitude,
-            rack,
-            shelf,
-            quantity,
-            price,
-            stock_date
-        )
+    selected_row,
+    source,
+    vendor_name,
+    make,
+    vehicle_number,
+    invoice_date,
+    project_name,
+    thickness,
+    length,
+    width,
+    qr_code if qr_code else None,
+    snapshot_path,
+    latitude,
+    longitude,
+    rack,
+    shelf,
+    quantity,
+    price,
+    stock_date,
+    st.session_state.get("username")
+)
 
         st.success("✅ Stock entry successful!")
 
@@ -665,13 +669,17 @@ if not stock_df.empty:
         stock_df["id"]
     )
 
-    if st.button("Delete Selected Entry"):
-        delete_stock_row(row_to_delete)
+   if st.button("Delete Selected Entry"):
+    delete_stock_row(
+        row_to_delete,
+        st.session_state.get("username"),
+        st.session_state.get("role")
+    )
         st.success("Deleted successfully")
         st.rerun()
 
     # 🔐 BULK DELETE (ADMIN ONLY)
-    if st.session_state.role == "admin":
+    if st.session_state.get("role") == "admin":
 
         st.markdown("### 🚨 Bulk Delete (Admin Only)")
 
