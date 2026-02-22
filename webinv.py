@@ -173,8 +173,10 @@ def append_stock(selected_row, source, vendor_name, make,
         to_native(added_by) if added_by else ""
     )
 
-    # Debug
-    st.write("DEBUG INSERT VALUES (converted to native):", insert_values)
+    DEBUG_MODE = False  # set True for development
+
+if DEBUG_MODE:
+    st.write("DEBUG INSERT VALUES:", insert_values)
 
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
