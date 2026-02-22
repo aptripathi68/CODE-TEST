@@ -632,7 +632,7 @@ if st.button("➕ Add Stock"):
             st.error(f"❌ Failed to add stock: {e}")
 
 
- # ---------- Current Stock & Delete Section ----------
+# ---------- Current Stock & Delete Section ----------
 stock_df = load_stock_data()
 
 st.subheader("📊 Current Stock")
