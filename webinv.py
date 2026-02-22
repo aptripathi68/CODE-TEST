@@ -416,9 +416,9 @@ selected_item_index = st.selectbox(
 selected_row = filtered_grade.loc[selected_item_index]
 
 # ---------- Dimension Fields ----------
-thickness = st.number_input("Thickness", value=None, placeholder="Enter thickness")
-length = st.number_input("Length (Meters)", value=None, placeholder="Enter length")
-width = st.number_input("Width (Meters)", value=None, placeholder="Enter width")
+thickness = st.number_input("Thickness", min_value=0.0, step=0.01, value=0.0)
+length = st.number_input("Length (Meters)", min_value=0.0, step=0.01, value=0.0)
+width = st.number_input("Width (Meters)", min_value=0.0, step=0.01, value=0.0)
 
 
 # ---------- PROFESSIONAL QR SCANNER ----------
@@ -532,8 +532,8 @@ else:
     latitude, longitude = None, None
     
 # ---------- Rack & Shelf ----------
-rack = st.number_input("Rack Number", min_value=0, step=1)
-shelf = st.number_input("Shelf Number", min_value=0, step=1)
+rack = st.number_input("Rack Number", min_value=0, step=1, value=0)
+shelf = st.number_input("Shelf Number", min_value=0, step=1, value=0)
 
 # Display item details
 st.write("**Item Details:**")
@@ -572,8 +572,8 @@ source = st.selectbox(
     "Select Source",
     source_options
 )
-quantity = st.number_input("Enter Quantity", value=None, placeholder="Enter quantity")
-price = st.number_input("Enter Price per unit", value=None, placeholder="Enter price")
+quantity = st.number_input("Enter Quantity", min_value=1.0, step=1.0, value=1.0)
+price = st.number_input("Enter Price per unit", min_value=0.0, step=0.01, value=0.0)
 st.markdown("### 📸 Item Snapshot (Optional)")
 snapshot = st.camera_input("Take Snapshot")
 
