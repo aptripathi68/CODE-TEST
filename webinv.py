@@ -116,9 +116,18 @@ def initialize_database():
     conn.commit()
     conn.close()
 
-def append_stock(..., added_by):
+def append_stock(selected_row, source, vendor_name, make,
+                 vehicle_number, invoice_date, project_name,
+                 thickness, length, width,
+                 qr_code, snapshot_path,
+                 latitude, longitude,
+                 rack, shelf,
+                 quantity, price, stock_date,
+                 added_by):
+    
+    # Ensure added_by is never None
     if not added_by:
-        added_by = ""  # ensure it's a string, never None
+        added_by = ""
     
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
