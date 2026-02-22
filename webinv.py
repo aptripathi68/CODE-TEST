@@ -1,48 +1,35 @@
+#THE BELOW CODE SUCCESSFUL CAPTURES INVENTORY INPUT, GPS LOCATION, QR CODE, SNAPSHOT 
+
+
+
+
+
 import streamlit as st
 import pandas as pd
 import csv
 import os
 import sqlite3
 import hashlib
-import json
 
-# ---------- USER MANAGEMENT SYSTEM ----------
+# ---------- Simple Authentication ----------
 
-USERS_FILE = "users.json"
+def check_login(username, password):
+    users = {
+        "admin": hashlib.sha256("admin123".encode()).hexdigest(),
+        "arun": hashlib.sha256("inventory".encode()).hexdigest()
+    }
 
-def load_users():
-    if not os.path.exists(USERS_FILE):
-        default_users = {
-            "admin": {
-                "password": hashlib.sha256("admin123".encode()).hexdigest(),
-                "role": "admin"
-            }
-        }
-        with open(USERS_FILE, "w") as f:
-            json.dump(default_users, f)
-        return default_users
-
-    with open(USERS_FILE, "r") as f:
-        return json.load(f)
-
-
-def save_users(users):
-    with open(USERS_FILE, "w") as f:
-        json.dump(users, f)
-
-
-def verify_login(username, password):
-    users = load_users()
     if username in users:
-        hashed = hashlib.sha256(password.encode()).hexdigest()
-        if hashed == users[username]["password"]:
-            return users[username]["role"]
-    return None
+        return users[username] == hashlib.sha256(password.encode()).hexdigest()
+    return False
+
+
+
+# File paths
+STOCK_FILE = DB_FILE = "inventory.db"
+MASTER_FILE = "Item_master.xlsx"
 
 # ---------- Helper Functions ----------
-
-DB_FILE = "inventory.db"
-MASTER_FILE = "Item_master.xlsx"
 
 def initialize_database():
     """Create inventory table if it doesn't exist."""
@@ -185,23 +172,16 @@ initialize_database()
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
-    st.session_state.username = None
-    st.session_state.role = None
 
 if not st.session_state.logged_in:
-
     st.title("🔐 Login Required")
 
-    username = st.text_input("Username", key="login_user")
-    password = st.text_input("Password", type="password", key="login_pass")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
 
-    if st.button("Login", key="login_btn"):
-        role = verify_login(username, password)
-
-        if role:
+    if st.button("Login"):
+        if check_login(username, password):
             st.session_state.logged_in = True
-            st.session_state.username = username
-            st.session_state.role = role
             st.success("Login Successful!")
             st.rerun()
         else:
@@ -209,45 +189,6 @@ if not st.session_state.logged_in:
 
     st.stop()
 
-# ---------- AFTER LOGIN ----------
-st.sidebar.success(f"Logged in as: {st.session_state.username} ({st.session_state.role})")
-
-if st.sidebar.button("🚪 Logout"):
-    st.session_state.logged_in = False
-    st.session_state.username = None
-    st.session_state.role = None
-    st.experimental_rerun()
-
-
-# ---------- ADMIN PANEL ----------
-if st.session_state.role == "admin":
-
-    st.sidebar.markdown("### 🛠 Admin Panel")
-
-    if st.sidebar.button("Create New User"):
-
-        st.subheader("👤 Create New User")
-
-        new_username = st.text_input("New Username", key="new_user")
-        default_password = st.text_input("Default Password", value="user123", key="new_pass")
-        new_role = st.selectbox("Role", ["user"], key="new_role")
-
-        if st.button("Create User", key="create_user_btn"):
-
-            users = load_users()
-
-            if new_username in users:
-                st.error("User already exists!")
-            elif new_username.strip() == "":
-                st.error("Username cannot be empty!")
-            else:
-                users[new_username] = {
-                    "password": hashlib.sha256(default_password.encode()).hexdigest(),
-                    "role": new_role
-                }
-                save_users(users)
-                st.success(f"User '{new_username}' created successfully!")
-                
 
 st.title("📦 Stock Entry System")
 
@@ -283,41 +224,121 @@ selected_item_index = st.selectbox(
 selected_row = filtered_grade.loc[selected_item_index]
 
 # ---------- Dimension Fields ----------
-thickness = st.number_input("thickness", min_value=0.0, step=0.01)
-length = st.number_input("length (Meters)", min_value=0.0, step=0.01)
-width = st.number_input("width (Meters)", min_value=0.0, step=0.01)
+thickness = st.number_input("Thickness", value=None, placeholder="Enter thickness")
+length = st.number_input("Length (Meters)", value=None, placeholder="Enter length")
+width = st.number_input("Width (Meters)", value=None, placeholder="Enter width")
 
-# ---------- QR Scan from Camera ----------
-from pyzbar.pyzbar import decode
-from PIL import Image
 
-qr_code = None
-snapshot = st.camera_input("📸 Scan QR Code")
+# ---------- PROFESSIONAL QR SCANNER ----------
+import streamlit.components.v1 as components
 
-if snapshot is not None:
-    image = Image.open(snapshot)
-    decoded_objects = decode(image)
+st.markdown("### 📷 Scan QR Code")
 
-    if decoded_objects:
-        qr_code = decoded_objects[0].data.decode("utf-8")
-        st.success(f"QR Code Detected: {qr_code}")
-    else:
-        st.warning("No QR code detected.")
+# Hidden field to store scanned value
+st.text_input("qr_value", key="qr_value", label_visibility="collapsed")
 
-# ---------- Auto GPS Location ----------
-from streamlit_geolocation import streamlit_geolocation
+qr_html = """
+<script src="https://unpkg.com/html5-qrcode"></script>
 
-location = streamlit_geolocation()
+<div id="reader" style="width:300px;"></div>
 
-if location:
-    latitude = location["latitude"]
-    longitude = location["longitude"]
-    st.write("📍 Latitude:", latitude)
-    st.write("📍 Longitude:", longitude)
+<script>
+function onScanSuccess(decodedText) {
+    const streamlitDoc = window.parent.document;
+    const input = streamlitDoc.querySelector('input[aria-label="qr_value"]');
+    if (input){
+        input.value = decodedText;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+}
+
+let html5QrcodeScanner = new Html5QrcodeScanner(
+    "reader",
+    { 
+        fps: 10,
+        qrbox: 250,
+        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+        videoConstraints: {
+            facingMode: { exact: "environment" }
+        }
+    }
+);
+
+html5QrcodeScanner.render(onScanSuccess);
+</script>
+"""
+
+components.html(qr_html, height=400)
+
+qr_code = st.session_state.get("qr_value")
+    
+
+# ---------- GPS Location ----------
+
+st.markdown("### 📍 Auto GPS Location")
+
+st.text_input("gps_value", key="gps_value", label_visibility="collapsed")
+
+gps_html = """
+<script>
+function getLocation() {
+
+    if (!navigator.geolocation) {
+        alert("Geolocation is not supported by this browser.");
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            const loc = lat + "," + lon;
+
+            const streamlitDoc = window.parent.document;
+            const input = streamlitDoc.querySelector('input[aria-label="gps_value"]');
+
+            if (input){
+                input.value = loc;
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+
+            alert("Location Captured Successfully");
+
+        },
+        function(error) {
+            alert("Error capturing location: " + error.message);
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        }
+    );
+}
+</script>
+
+<button onclick="getLocation()" style="
+padding:10px 14px;
+background-color:#007BFF;
+color:white;
+border:none;
+border-radius:6px;
+font-size:16px;">
+📍 Capture GPS Location
+</button>
+"""
+
+components.html(gps_html, height=90)
+
+gps_value = st.session_state.get("gps_value")
+
+if gps_value and "," in gps_value:
+    latitude, longitude = map(float, gps_value.split(","))
+    st.success(f"📍 Location: {latitude}, {longitude}")
 else:
-    latitude = None
-    longitude = None
-
+    latitude, longitude = None, None
+    
 # ---------- Rack & Shelf ----------
 rack = st.number_input("Rack Number", min_value=0, step=1)
 shelf = st.number_input("Shelf Number", min_value=0, step=1)
@@ -359,16 +380,20 @@ source = st.selectbox(
     "Select Source",
     source_options
 )
-quantity = st.number_input("Enter Quantity", min_value=0.0, step=0.01)
-price = st.number_input("Enter Price per unit", min_value=0.0, step=0.01)
+quantity = st.number_input("Enter Quantity", value=None, placeholder="Enter quantity")
+price = st.number_input("Enter Price per unit", value=None, placeholder="Enter price")
+st.markdown("### 📸 Item Snapshot (Optional)")
+snapshot = st.camera_input("Take Snapshot")
 
 # Add stock button
 import os
 
 if st.button("➕ Add Stock"):
 
-    if quantity <= 0 or price <= 0:
+    # Validate
+    if quantity is None or price is None or quantity <= 0 or price <= 0:
         st.error("❌ Quantity and Price must be greater than 0")
+
     else:
 
         snapshot_path = None
@@ -379,17 +404,31 @@ if st.button("➕ Add Stock"):
 
         # Save snapshot only if taken
         if snapshot is not None:
-            if qr_code:
-                safe_qr = qr_code.replace("/", "_").replace(" ", "_")
+
+            from datetime import datetime
+
+            qr_value = st.session_state.get("qr_value")
+
+            if qr_value and isinstance(qr_value, str):
+
+                safe_qr = (
+                    qr_value.strip()
+                    .replace("/", "_")
+                    .replace("\\", "_")
+                    .replace(" ", "_")
+                    .replace(":", "_")
+                )
+
                 snapshot_path = f"images/{safe_qr}.jpg"
+
             else:
-                from datetime import datetime
                 timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
                 snapshot_path = f"images/photo_{timestamp}.jpg"
 
             with open(snapshot_path, "wb") as f:
                 f.write(snapshot.getbuffer())
 
+        # Insert into database (ALWAYS inside button block)
         append_stock(
             selected_row,
             source,
@@ -413,6 +452,11 @@ if st.button("➕ Add Stock"):
         )
 
         st.success("✅ Stock entry successful!")
+
+        # Reset QR & GPS to prevent repeat
+        st.session_state.pop("qr_value", None)
+        st.session_state.pop("gps_value", None)
+
         st.rerun()
 
 # Display current stock
@@ -457,3 +501,48 @@ if not stock_df.empty:
 
 else:
     st.info("No stock entries available.")
+
+st.markdown("### 🗑 Bulk Delete (By ID Range)")
+
+if not stock_df.empty:
+
+    min_id = int(stock_df["id"].min())
+    max_id = int(stock_df["id"].max())
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        start_id = st.number_input(
+            "From ID",
+            min_value=min_id,
+            max_value=max_id,
+            step=1
+        )
+
+    with col2:
+        end_id = st.number_input(
+            "To ID",
+            min_value=min_id,
+            max_value=max_id,
+            step=1
+        )
+
+    if st.button("Delete Range"):
+
+        if start_id > end_id:
+            st.error("Start ID cannot be greater than End ID")
+        else:
+            conn = sqlite3.connect(DB_FILE)
+            cursor = conn.cursor()
+            cursor.execute(
+                "DELETE FROM inventory WHERE id BETWEEN ? AND ?",
+                (start_id, end_id)
+            )
+            conn.commit()
+            conn.close()
+
+            st.success(f"Deleted records from ID {start_id} to {end_id}")
+            st.rerun()
+
+else:
+    st.info("No records available for deletion.")
