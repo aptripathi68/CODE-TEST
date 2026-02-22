@@ -79,13 +79,16 @@ def clean_value(val):
 # ---------- INITIALIZE USERS TABLE ----------
 
 def initialize_database():
-    """Create inventory table if it doesn't exist."""
+    """Drop old inventory table and create a fresh one with updated schema."""
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
 
-    # Create table if not exists
+    # Drop old table if exists
+    cursor.execute("DROP TABLE IF EXISTS inventory")
+
+    # Create table with all required columns
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS inventory (
+        CREATE TABLE inventory (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             item_master_id TEXT,
             item_description TEXT,
