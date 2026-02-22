@@ -631,16 +631,6 @@ if st.button("➕ Add Stock"):
         except Exception as e:
             st.error(f"❌ Failed to add stock: {e}")
 
-# Reload stock after adding
-stock_df = load_stock_data()  # fetch fresh data
-
-# Display current stock
-st.subheader("📊 Current Stock")
-if not stock_df.empty:
-    st.dataframe(stock_df, use_container_width=True)
-else:
-    st.info("No stock entries available.")
-
 
     # ---------- Delete Section ----------
 
