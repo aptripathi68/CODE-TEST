@@ -471,7 +471,6 @@ html5QrcodeScanner.render(onScanSuccess);
 
 components.html(qr_html, height=400)
 
-qr_code = st.session_state.get("qr_value")
     
 
 # ---------- GPS Location ----------
@@ -590,87 +589,58 @@ snapshot = st.camera_input("Take Snapshot")
 import os
 
 if st.button("➕ Add Stock"):
-
-    # Validate
-    if quantity is None or price is None or quantity <= 0 or price <= 0:
+    if quantity <= 0 or price <= 0:
         st.error("❌ Quantity and Price must be greater than 0")
-
     else:
         # --- Clean selected_row values ---
-        selected_row["Item Master ID"] = clean_value(selected_row["Item Master ID"])
-        selected_row["Item Description"] = clean_value(selected_row["Item Description"])
-        selected_row["Grade Name"] = clean_value(selected_row["Grade Name"])
-        selected_row["Group1 Name"] = clean_value(selected_row["Group1 Name"])
-        selected_row["Group2 Name"] = clean_value(selected_row["Group2 Name"])
-        selected_row["Section Name"] = clean_value(selected_row["Section Name"])
-        selected_row["Unit Wt. (kg/m)"] = clean_value(selected_row["Unit Wt. (kg/m)"])
+        for col in ["Item Master ID", "Item Description", "Grade Name", "Group1 Name", "Group2 Name", "Section Name", "Unit Wt. (kg/m)"]:
+            selected_row[col] = clean_value(selected_row[col])
 
+        # Get latest QR
+        qr_code = st.session_state.get("qr_value")
+        
+        # Save snapshot
         snapshot_path = None
-
-        # Create images folder if not exists
-        if not os.path.exists("images"):
-            os.makedirs("images")
-
-        # Save snapshot only if taken
-        if snapshot is not None:
-
+        if snapshot:
             from datetime import datetime
-
-            qr_value = st.session_state.get("qr_value")
-
-            if qr_value and isinstance(qr_value, str):
-
-                safe_qr = (
-                    qr_value.strip()
-                    .replace("/", "_")
-                    .replace("\\", "_")
-                    .replace(" ", "_")
-                    .replace(":", "_")
-                )
-
-                snapshot_path = f"images/{safe_qr}.jpg"
-
+            if qr_code:
+                safe_qr = qr_code.strip().replace("/", "_").replace("\\", "_").replace(" ", "_").replace(":", "_")
+                from datetime import datetime
+                snapshot_path = f"images/{safe_qr}_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg"
             else:
-                timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-                snapshot_path = f"images/photo_{timestamp}.jpg"
-
+                snapshot_path = f"images/photo_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg"
             with open(snapshot_path, "wb") as f:
                 f.write(snapshot.getbuffer())
 
-        # Insert into database (ALWAYS inside button block)
+        # Append to DB
         try:
             append_stock(
-                selected_row,
-                source,
-                vendor_name,
-                make,
-                vehicle_number,
-                invoice_date,
-                project_name,
-                thickness,
-                length,
-                width,
-                qr_code if qr_code else None,
-                snapshot_path,
-                latitude,
-                longitude,
-                rack,
-                shelf,
-                quantity,
-                price,
-                stock_date,
+                selected_row, source, vendor_name, make,
+                vehicle_number, invoice_date, project_name,
+                thickness, length, width,
+                qr_code, snapshot_path,
+                latitude, longitude,
+                rack, shelf,
+                quantity, price, stock_date,
                 st.session_state.get("username")
             )
             st.success("✅ Stock entry successful!")
         except Exception as e:
             st.error(f"❌ Failed to add stock: {e}")
-            
-        # Reset QR & GPS to prevent repeat
+
+        # Clear QR & GPS to prevent duplicates
         st.session_state.pop("qr_value", None)
         st.session_state.pop("gps_value", None)
 
-        st.rerun()
+ # Reload stock after adding
+stock_df = load_stock_data()  # fetch fresh data
+st.success("✅ Stock entry successful!")
 
+# Clear QR & GPS
+st.session_state.pop("qr_value", None)
+st.session_state.pop("gps_value", None)
+
+st.rerun()
 
     # ---------- Delete Section ----------
 
