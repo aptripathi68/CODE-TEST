@@ -4,24 +4,40 @@ import csv
 import os
 import sqlite3
 import hashlib
+import json
 
-# ---------- Simple Authentication ----------
+# ---------- USER MANAGEMENT SYSTEM ----------
 
-def check_login(username, password):
-    users = {
-        "admin": hashlib.sha256("admin123".encode()).hexdigest(),
-        "arun": hashlib.sha256("inventory".encode()).hexdigest()
-    }
+USERS_FILE = "users.json"
 
+def load_users():
+    if not os.path.exists(USERS_FILE):
+        default_users = {
+            "admin": {
+                "password": hashlib.sha256("admin123".encode()).hexdigest(),
+                "role": "admin"
+            }
+        }
+        with open(USERS_FILE, "w") as f:
+            json.dump(default_users, f)
+        return default_users
+
+    with open(USERS_FILE, "r") as f:
+        return json.load(f)
+
+
+def save_users(users):
+    with open(USERS_FILE, "w") as f:
+        json.dump(users, f)
+
+
+def verify_login(username, password):
+    users = load_users()
     if username in users:
-        return users[username] == hashlib.sha256(password.encode()).hexdigest()
-    return False
-
-
-
-# File paths
-STOCK_FILE = DB_FILE = "inventory.db"
-MASTER_FILE = "Item_master.xlsx"
+        hashed = hashlib.sha256(password.encode()).hexdigest()
+        if hashed == users[username]["password"]:
+            return users[username]["role"]
+    return None
 
 # ---------- Helper Functions ----------
 
@@ -166,23 +182,69 @@ initialize_database()
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
+    st.session_state.username = None
+    st.session_state.role = None
 
 if not st.session_state.logged_in:
+
     st.title("🔐 Login Required")
 
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
+    username = st.text_input("Username", key="login_user")
+    password = st.text_input("Password", type="password", key="login_pass")
 
-    if st.button("Login"):
-        if check_login(username, password):
+    if st.button("Login", key="login_btn"):
+        role = verify_login(username, password)
+
+        if role:
             st.session_state.logged_in = True
+            st.session_state.username = username
+            st.session_state.role = role
             st.success("Login Successful!")
-            st.rerun()
+            st.experimental_rerun()
         else:
             st.error("Invalid Username or Password")
 
     st.stop()
 
+# ---------- AFTER LOGIN ----------
+st.sidebar.success(f"Logged in as: {st.session_state.username} ({st.session_state.role})")
+
+if st.sidebar.button("🚪 Logout"):
+    st.session_state.logged_in = False
+    st.session_state.username = None
+    st.session_state.role = None
+    st.experimental_rerun()
+
+
+# ---------- ADMIN PANEL ----------
+if st.session_state.role == "admin":
+
+    st.sidebar.markdown("### 🛠 Admin Panel")
+
+    if st.sidebar.button("Create New User"):
+
+        st.subheader("👤 Create New User")
+
+        new_username = st.text_input("New Username", key="new_user")
+        default_password = st.text_input("Default Password", value="user123", key="new_pass")
+        new_role = st.selectbox("Role", ["user"], key="new_role")
+
+        if st.button("Create User", key="create_user_btn"):
+
+            users = load_users()
+
+            if new_username in users:
+                st.error("User already exists!")
+            elif new_username.strip() == "":
+                st.error("Username cannot be empty!")
+            else:
+                users[new_username] = {
+                    "password": hashlib.sha256(default_password.encode()).hexdigest(),
+                    "role": new_role
+                }
+                save_users(users)
+                st.success(f"User '{new_username}' created successfully!")
+                
 
 st.title("📦 Stock Entry System")
 
