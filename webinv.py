@@ -632,18 +632,15 @@ if st.button("➕ Add Stock"):
             st.error(f"❌ Failed to add stock: {e}")
 
 
-    # ---------- Delete Section ----------
-
-st.subheader("📊 Current Stock")
+ # ---------- Current Stock & Delete Section ----------
 stock_df = load_stock_data()
 
+st.subheader("📊 Current Stock")
 if not stock_df.empty:
-
     st.dataframe(stock_df, use_container_width=True)
 
     # 🔹 Single Row Delete (VISIBLE TO ALL)
     st.subheader("🗑 Delete Single Stock Entry")
-
     row_to_delete = st.selectbox(
         "Select ID to Delete",
         stock_df["id"]
@@ -655,27 +652,22 @@ if not stock_df.empty:
             st.session_state.get("username"),
             st.session_state.get("role")
         )
-        st.success("Deleted successfully")
+        st.success("✅ Entry deleted successfully")
         st.rerun()
 
     # 🔐 BULK DELETE (ADMIN ONLY)
     if st.session_state.get("role") == "admin":
-
         st.markdown("### 🚨 Bulk Delete (Admin Only)")
-
         min_id = int(stock_df["id"].min())
         max_id = int(stock_df["id"].max())
 
         col1, col2 = st.columns(2)
-
         with col1:
             start_id = st.number_input("From ID", min_value=min_id, max_value=max_id)
-
         with col2:
             end_id = st.number_input("To ID", min_value=min_id, max_value=max_id)
 
         if st.button("Delete Range"):
-
             if start_id > end_id:
                 st.error("Start ID cannot be greater than End ID")
             else:
@@ -687,8 +679,7 @@ if not stock_df.empty:
                 )
                 conn.commit()
                 conn.close()
-
-                st.success(f"Deleted records from ID {start_id} to {end_id}")
+                st.success(f"✅ Deleted records from ID {start_id} to {end_id}")
                 st.rerun()
 
 else:
