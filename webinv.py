@@ -281,6 +281,7 @@ with col2:
 if st.session_state.role == "admin":
     st.sidebar.markdown("### 👨‍💼 Admin Panel")
 
+    # Create User
     new_user = st.sidebar.text_input("New Username")
     if st.sidebar.button("Create User"):
 
@@ -301,7 +302,9 @@ if st.session_state.role == "admin":
             st.sidebar.error("User already exists")
 
         conn.close()
-
+# User Management
+    st.subheader("👤 User Management")
+    
 
 st.title("📦 Stock Entry System")
 
@@ -580,22 +583,20 @@ stock_df = load_stock_data()
 
 if not stock_df.empty:
 
-    display_df = stock_df.drop(columns=["item_master_id"], errors="ignore")
-    display_df.index = range(1, len(display_df) + 1)
-    st.dataframe(display_df)
+   st.dataframe(display_df)
 
-    # Export
-    import io
-    buffer = io.BytesIO()
-    display_df.to_excel(buffer, index=False, engine="openpyxl")
-    buffer.seek(0)
+    # 🔹 Single Row Delete (Both Admin & User)
+    st.subheader("🗑 Delete Single Stock Entry")
 
-    st.download_button(
-        label="📥 Download Stock as Excel",
-        data=buffer,
-        file_name="Current_Stock.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    row_to_delete = st.selectbox(
+        "Select ID to Delete",
+        stock_df["id"]
     )
+
+    if st.button("Delete Selected Entry"):
+        delete_stock_row(row_to_delete)
+        st.success("Deleted successfully")
+        st.rerun()
 
     # 🔐 ADMIN DELETE SECTION
     
