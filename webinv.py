@@ -173,11 +173,11 @@ def append_stock(selected_row, source, vendor_name, make,
         to_native(added_by) if added_by else ""
     )
 
-    
+    # Debug output
+    if DEBUG_MODE:
+        st.write("DEBUG INSERT VALUES (converted to native):", insert_values)
 
-if DEBUG_MODE:
-    st.write("DEBUG INSERT VALUES (converted to native):", insert_values)
-
+    # Insert into DB (always)
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute("""
@@ -246,9 +246,8 @@ def delete_stock_row(row_id, username, role):
 # Database initialization
 # Initialize database only if file does not exist
 if not os.path.exists(DB_FILE):
-    initialize_database()
+    initialize_database_safe()
     initialize_users_table()
-
 
 # ---------- Streamlit Interface ----------
 
