@@ -634,12 +634,6 @@ if st.button("➕ Add Stock"):
 # Reload stock after adding
 stock_df = load_stock_data()  # fetch fresh data
 
-# Clear QR & GPS to prevent duplicates
-st.session_state.pop("qr_value", None)
-st.session_state.pop("gps_value", None)
-
-
-
     # ---------- Delete Section ----------
 
 st.subheader("📊 Current Stock")
