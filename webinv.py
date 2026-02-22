@@ -667,30 +667,30 @@ if st.button("➕ Add Stock"):
             with open(snapshot_path, "wb") as f:
                 f.write(snapshot.getbuffer())
 
-        # Insert into DB
-        try:
-            append_stock(
-                selected_row, 
-                st.session_state["source"], 
-                st.session_state["vendor_name"], 
-                st.session_state["make"],
-                st.session_state["vehicle_number"], 
-                invoice_date, 
-                st.session_state["project_name"],
-                st.session_state["thickness"], 
-                st.session_state["length"], 
-                st.session_state["width"],
-                qr_code, 
-                snapshot_path,
-                latitude, 
-                longitude,
-                rack, 
-                shelf,
-                st.session_state["quantity"], 
-                st.session_state["price"], 
-                stock_date,
-                st.session_state.get("username")
-            )
+            # Insert into DB
+            try:
+                append_stock(
+                    selected_row, 
+                    st.session_state["source"], 
+                    st.session_state["vendor_name"], 
+                    st.session_state["make"],
+                    st.session_state["vehicle_number"], 
+                    invoice_date, 
+                    st.session_state["project_name"],
+                    st.session_state["thickness"], 
+                    st.session_state["length"], 
+                    st.session_state["width"],
+                    qr_code, 
+                    snapshot_path,
+                    latitude, 
+                    longitude,
+                    rack, 
+                    shelf,
+                    st.session_state["quantity"], 
+                    st.session_state["price"], 
+                    stock_date,
+                    st.session_state.get("username")
+                )
 
             # Clear QR, GPS & input fields for fresh entry
            if st.button("➕ Add Stock"):
