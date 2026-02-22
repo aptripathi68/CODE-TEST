@@ -313,8 +313,8 @@ if st.session_state.get("role") == "admin":
                 """, (new_user, default_password, "user", 1))
                 conn.commit()
                 st.sidebar.success("User created! Default password: 123456")
-            except:
-                st.sidebar.error("User already exists")
+            except sqlite3.IntegrityError:
+    st.sidebar.error("User already exists")
 
             conn.close()
 
@@ -675,9 +675,10 @@ if not stock_df.empty:
         st.session_state.get("username"),
         st.session_state.get("role")
     )
-        st.success("Deleted successfully")
-        st.rerun()
+    st.success("Deleted successfully")
+    st.rerun()
 
+       
     # 🔐 BULK DELETE (ADMIN ONLY)
     if st.session_state.get("role") == "admin":
 
