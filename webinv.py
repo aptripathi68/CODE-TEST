@@ -173,6 +173,24 @@ def append_stock(selected_row, source, vendor_name, make,
         to_native(added_by) if added_by else ""
     )
 
+
+# Function to reset input fields
+def reset_stock_inputs():
+    for key, default in {
+        "thickness": 0.0,
+        "length": 0.0,
+        "width": 0.0,
+        "vendor_name": "",
+        "make": "",
+        "vehicle_number": "",
+        "project_name": "",
+        "source": "Spare RM",
+        "quantity": 1.0,
+        "price": 0.0,
+        "qr_value": "",
+        "gps_value": ""
+    }.items():
+        st.session_state[key] = default
     # Debug output
     if DEBUG_MODE:
         st.write("DEBUG INSERT VALUES (converted to native):", insert_values)
@@ -675,21 +693,42 @@ if st.button("➕ Add Stock"):
             )
 
             # Clear QR, GPS & input fields for fresh entry
-            st.session_state["thickness"] = 0.0
-            st.session_state["length"] = 0.0
-            st.session_state["width"] = 0.0
-            st.session_state["vendor_name"] = ""
-            st.session_state["make"] = ""
-            st.session_state["vehicle_number"] = ""
-            st.session_state["project_name"] = ""
-            st.session_state["source"] = "Spare RM"
-            st.session_state["quantity"] = 1.0
-            st.session_state["price"] = 0.0
-            st.session_state["qr_value"] = ""
-            st.session_state["gps_value"] = ""
+           if st.button("➕ Add Stock"):
+    if st.session_state["quantity"] <= 0 or st.session_state["price"] <= 0:
+        st.error("❌ Quantity and Price must be greater than 0")
+    else:
+        # Insert into DB
+        try:
+            append_stock(
+                selected_row, 
+                st.session_state["source"], 
+                st.session_state["vendor_name"], 
+                st.session_state["make"],
+                st.session_state["vehicle_number"], 
+                invoice_date, 
+                st.session_state["project_name"],
+                st.session_state["thickness"], 
+                st.session_state["length"], 
+                st.session_state["width"],
+                st.session_state.get("qr_value"), 
+                snapshot_path,
+                latitude, 
+                longitude,
+                rack, 
+                shelf,
+                st.session_state["quantity"], 
+                st.session_state["price"], 
+                stock_date,
+                st.session_state.get("username")
+            )
+
+            # ✅ Reset all input fields safely
+            reset_stock_inputs()
             
             st.success("✅ Stock entry successful! Fields reset for fresh entry.")
-            st.session_state["stock_added"] = True
+
+            # Refresh app to apply reset
+            st.experimental_rerun()
 
         except Exception as e:
             st.error(f"❌ Failed to add stock: {e}")
