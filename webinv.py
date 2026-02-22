@@ -296,28 +296,23 @@ if st.session_state.get("role") == "admin":
     # ---------------- CREATE USER ----------------
     new_user = st.sidebar.text_input("New Username")
 
-    if st.sidebar.button("Create User"):
-
-        if not new_user.strip():
-            st.sidebar.error("Username cannot be empty")
-        else:
-            default_password = hashlib.sha256("123456".encode()).hexdigest()
-
-            conn = sqlite3.connect(DB_FILE)
-            cursor = conn.cursor()
-
-            try:
-                cursor.execute("""
-                    INSERT INTO users (username, password, role, must_change_password)
-                    VALUES (?, ?, ?, ?)
-                """, (new_user, default_password, "user", 1))
-                conn.commit()
-                st.sidebar.success("User created! Default password: 123456")
-            except sqlite3.IntegrityError:
-except sqlite3.IntegrityError:
-    st.sidebar.error("User already exists")
-
-            conn.close()
+if st.sidebar.button("Create User"):
+    if not new_user.strip():
+        st.sidebar.error("Username cannot be empty")
+    else:
+        default_password = hashlib.sha256("123456".encode()).hexdigest()
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        try:
+            cursor.execute("""
+                INSERT INTO users (username, password, role, must_change_password)
+                VALUES (?, ?, ?, ?)
+            """, (new_user, default_password, "user", 1))
+            conn.commit()
+            st.sidebar.success("User created! Default password: 123456")
+        except sqlite3.IntegrityError:
+            st.sidebar.error("User already exists")
+        conn.close()
 
     # ---------------- USER MANAGEMENT ----------------
     st.subheader("👤 User Management")
@@ -670,15 +665,15 @@ if not stock_df.empty:
         stock_df["id"]
     )
 
-if st.button("Delete Selected Entry"):
-    delete_stock_row(
-        row_to_delete,
-        st.session_state.get("username"),
-        st.session_state.get("role")
-    )
-    st.success("Deleted successfully")
-    st.rerun()
-       
+    if st.button("Delete Selected Entry"):
+        delete_stock_row(
+            row_to_delete,
+            st.session_state.get("username"),
+            st.session_state.get("role")
+        )
+        st.success("Deleted successfully")
+        st.rerun()
+
     # 🔐 BULK DELETE (ADMIN ONLY)
     if st.session_state.get("role") == "admin":
 
