@@ -437,9 +437,9 @@ selected_item_index = st.selectbox(
 selected_row = filtered_grade.loc[selected_item_index]
 
 # ---------- Dimension Fields ----------
-thickness = st.number_input("Thickness", min_value=0.0, step=0.01, value=0.0)
-length = st.number_input("Length (Meters)", min_value=0.0, step=0.01, value=0.0)
-width = st.number_input("Width (Meters)", min_value=0.0, step=0.01, value=0.0)
+thickness = st.number_input("Thickness (mm)", value=None, placeholder="Enter thickness")
+length = st.number_input("Length (Meters)", value=None, placeholder="Enter length")
+width = st.number_input("Width (Meters)", value=None, placeholder="Enter width")
 
 
 # ---------- PROFESSIONAL QR SCANNER ----------
