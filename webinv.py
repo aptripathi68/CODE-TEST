@@ -613,27 +613,28 @@ if st.button("➕ Add Stock"):
 
         # Insert into DB
         try:
-    append_stock(
-        selected_row, source, vendor_name, make,
-        vehicle_number, invoice_date, project_name,
-        thickness, length, width,
-        qr_code, snapshot_path,
-        latitude, longitude,
-        rack, shelf,
-        quantity, price, stock_date,
-        st.session_state.get("username")
-    )
-    st.session_state.pop("qr_value", None)
-    st.session_state.pop("gps_value", None)
+            append_stock(
+                selected_row, source, vendor_name, make,
+                vehicle_number, invoice_date, project_name,
+                thickness, length, width,
+                qr_code, snapshot_path,
+                latitude, longitude,
+                rack, shelf,
+                quantity, price, stock_date,
+                st.session_state.get("username")
+            )
 
-    st.success("✅ Stock entry successful!")
-    st.session_state["stock_added"] = True
+            # Clear QR & GPS after insert
+            st.session_state.pop("qr_value", None)
+            st.session_state.pop("gps_value", None)
 
-except Exception as e:
-    st.error(f"❌ Failed to add stock: {e}")
-    import traceback
-    st.error(traceback.format_exc())
+            st.success("✅ Stock entry successful!")
+            st.session_state["stock_added"] = True
 
+        except Exception as e:
+            st.error(f"❌ Failed to add stock: {e}")
+            import traceback
+            st.error(traceback.format_exc())
 
 # ---------- Current Stock & Delete Section ----------
 if st.session_state.get("stock_added"):
