@@ -116,82 +116,70 @@ def initialize_database():
     conn.commit()
     conn.close()
 
-def append_stock(selected_row, source, vendor_name, make,
-                 vehicle_number, invoice_date, project_name,
-                 thickness, length, width,
-                 qr_code, snapshot_path,
-                 latitude, longitude,
-                 rack, shelf,
-                 quantity, price, stock_date,
-                 added_by):
-
+def append_stock(..., added_by):
+    if not added_by:
+        added_by = ""  # ensure it's a string, never None
+    
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
 
-    # Ensure numeric fields are valid
-    def safe_float(val):
-        return float(val) if val not in [None, ""] else None
-
-    def safe_int(val):
-        return int(val) if val not in [None, ""] else None
-
     cursor.execute("""
-INSERT INTO inventory (
-    item_master_id,
-    item_description,
-    grade_name,
-    group1_name,
-    group2_name,
-    section_name,
-    unit_weight,
-    source,
-    vendor_name,
-    make,
-    vehicle_number,
-    invoice_date,
-    project_name,
-    thickness,
-    length,
-    width,
-    qr_code,
-    snapshot,
-    latitude,
-    longitude,
-    rack,
-    shelf,
-    quantity,
-    price,
-    stock_date,
-    added_by
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-""", (
-    selected_row.get("Item Master ID", ""),
-    selected_row.get("Item Description", ""),
-    selected_row.get("Grade Name", ""),
-    selected_row.get("Group1 Name", ""),
-    selected_row.get("Group2 Name", ""),
-    selected_row.get("Section Name", ""),
-    safe_float(selected_row.get("Unit Wt. (kg/m)")),
-    source or "",
-    vendor_name or "",
-    make or "",
-    vehicle_number or "",
-    str(invoice_date) if invoice_date else None,
-    project_name or "",
-    safe_float(thickness),
-    safe_float(length),
-    safe_float(width),
-    qr_code or "",
-    snapshot_path or "",
-    safe_float(latitude),
-    safe_float(longitude),
-    safe_int(rack),
-    safe_int(shelf),
-    safe_float(quantity),
-    safe_float(price),
-    str(stock_date) if stock_date else None,
-    added_by or ""
-))
+    INSERT INTO inventory (
+        item_master_id,
+        item_description,
+        grade_name,
+        group1_name,
+        group2_name,
+        section_name,
+        unit_weight,
+        source,
+        vendor_name,
+        make,
+        vehicle_number,
+        invoice_date,
+        project_name,
+        thickness,
+        length,
+        width,
+        qr_code,
+        snapshot,
+        latitude,
+        longitude,
+        rack,
+        shelf,
+        quantity,
+        price,
+        stock_date,
+        added_by
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        selected_row["Item Master ID"],
+        selected_row["Item Description"],
+        selected_row["Grade Name"],
+        selected_row["Group1 Name"],
+        selected_row["Group2 Name"],
+        selected_row["Section Name"],
+        selected_row["Unit Wt. (kg/m)"],
+        source,
+        vendor_name,
+        make,
+        vehicle_number,
+        str(invoice_date) if invoice_date else None,
+        project_name,
+        thickness if thickness is not None else None,
+        length if length is not None else None,
+        width if width is not None else None,
+        qr_code if qr_code else None,
+        snapshot_path if snapshot_path else None,
+        latitude if latitude is not None else None,
+        longitude if longitude is not None else None,
+        rack if rack is not None else None,
+        shelf if shelf is not None else None,
+        quantity if quantity is not None else None,
+        price if price is not None else None,
+        str(stock_date) if stock_date else None,
+        added_by
+    ))
 
     conn.commit()
     conn.close()
