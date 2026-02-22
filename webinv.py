@@ -70,7 +70,10 @@ def initialize_users_table():
     conn.close()
 
 # ---------- Helper Functions ----------
-
+def clean_value(val):
+    if pd.isna(val):
+        return None
+    return val
 
 
 # ---------- INITIALIZE USERS TABLE ----------
@@ -116,6 +119,7 @@ def initialize_database():
     conn.commit()
     conn.close()
 
+
 def append_stock(selected_row, source, vendor_name, make,
                  vehicle_number, invoice_date, project_name,
                  thickness, length, width,
@@ -124,44 +128,46 @@ def append_stock(selected_row, source, vendor_name, make,
                  rack, shelf,
                  quantity, price, stock_date,
                  added_by):
-    
+
     # Ensure added_by is never None
     if not added_by:
         added_by = ""
-    
+
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
 
-insert_values = (
-    selected_row["Item Master ID"],
-    selected_row["Item Description"],
-    selected_row["Grade Name"],
-    selected_row["Group1 Name"],
-    selected_row["Group2 Name"],
-    selected_row["Section Name"],
-    selected_row["Unit Wt. (kg/m)"],
-    source,
-    vendor_name,
-    make,
-    vehicle_number,
-    str(invoice_date) if invoice_date else None,
-    project_name,
-    thickness if thickness is not None else None,
-    length if length is not None else None,
-    width if width is not None else None,
-    qr_code if qr_code else None,
-    snapshot_path if snapshot_path else None,
-    latitude if latitude is not None else None,
-    longitude if longitude is not None else None,
-    rack if rack is not None else None,
-    shelf if shelf is not None else None,
-    quantity if quantity is not None else None,
-    price if price is not None else None,
-    str(stock_date) if stock_date else None,
-    added_by if added_by else ""
-)
+    insert_values = (
+        selected_row["Item Master ID"],
+        selected_row["Item Description"],
+        selected_row["Grade Name"],
+        selected_row["Group1 Name"],
+        selected_row["Group2 Name"],
+        selected_row["Section Name"],
+        selected_row["Unit Wt. (kg/m)"],
+        source,
+        vendor_name,
+        make,
+        vehicle_number,
+        str(invoice_date) if invoice_date else None,
+        project_name,
+        thickness if thickness is not None else None,
+        length if length is not None else None,
+        width if width is not None else None,
+        qr_code if qr_code else None,
+        snapshot_path if snapshot_path else None,
+        latitude if latitude is not None else None,
+        longitude if longitude is not None else None,
+        rack if rack is not None else None,
+        shelf if shelf is not None else None,
+        quantity if quantity is not None else None,
+        price if price is not None else None,
+        str(stock_date) if stock_date else None,
+        added_by if added_by else ""
+    )
 
-st.write("DEBUG INSERT VALUES:", insert_values)                     
+    # Debug: show what values are going to be inserted
+    st.write("DEBUG INSERT VALUES:", insert_values)
+
     cursor.execute("""
     INSERT INTO inventory (
         item_master_id,
@@ -191,34 +197,7 @@ st.write("DEBUG INSERT VALUES:", insert_values)
         stock_date,
         added_by
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        selected_row["Item Master ID"],
-        selected_row["Item Description"],
-        selected_row["Grade Name"],
-        selected_row["Group1 Name"],
-        selected_row["Group2 Name"],
-        selected_row["Section Name"],
-        selected_row["Unit Wt. (kg/m)"],
-        source,
-        vendor_name,
-        make,
-        vehicle_number,
-        str(invoice_date) if invoice_date else None,
-        project_name,
-        thickness if thickness is not None else None,
-        length if length is not None else None,
-        width if width is not None else None,
-        qr_code if qr_code else None,
-        snapshot_path if snapshot_path else None,
-        latitude if latitude is not None else None,
-        longitude if longitude is not None else None,
-        rack if rack is not None else None,
-        shelf if shelf is not None else None,
-        quantity if quantity is not None else None,
-        price if price is not None else None,
-        str(stock_date) if stock_date else None,
-        added_by
-    ))
+    """, insert_values)
 
     conn.commit()
     conn.close()
@@ -617,6 +596,14 @@ if st.button("➕ Add Stock"):
         st.error("❌ Quantity and Price must be greater than 0")
 
     else:
+        # --- Clean selected_row values ---
+        selected_row["Item Master ID"] = clean_value(selected_row["Item Master ID"])
+        selected_row["Item Description"] = clean_value(selected_row["Item Description"])
+        selected_row["Grade Name"] = clean_value(selected_row["Grade Name"])
+        selected_row["Group1 Name"] = clean_value(selected_row["Group1 Name"])
+        selected_row["Group2 Name"] = clean_value(selected_row["Group2 Name"])
+        selected_row["Section Name"] = clean_value(selected_row["Section Name"])
+        selected_row["Unit Wt. (kg/m)"] = clean_value(selected_row["Unit Wt. (kg/m)"])
 
         snapshot_path = None
 
