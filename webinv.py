@@ -80,54 +80,41 @@ def initialize_database():
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
 
-    
-# Create table if not exists
-     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS inventory (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        item_master_id TEXT,
-        item_description TEXT,
-        grade_name TEXT,
-        group1_name TEXT,
-        group2_name TEXT,
-        section_name TEXT,
-        unit_weight REAL,
-        source TEXT,
-        vendor_name TEXT,
-        make TEXT,
-        vehicle_number TEXT,
-        invoice_date TEXT,
-        project_name TEXT,
-        thickness REAL,
-        length REAL,
-        width REAL,
-        qr_code TEXT,
-        snapshot TEXT,
-        latitude REAL,
-        longitude REAL,
-        rack INTEGER,
-        shelf INTEGER,
-        quantity REAL,
-        price REAL,
-        stock_date TEXT,
-        added_by TEXT
-    )
+    # Create table if not exists
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS inventory (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            item_master_id TEXT,
+            item_description TEXT,
+            grade_name TEXT,
+            group1_name TEXT,
+            group2_name TEXT,
+            section_name TEXT,
+            unit_weight REAL,
+            source TEXT,
+            vendor_name TEXT,
+            make TEXT,
+            vehicle_number TEXT,
+            invoice_date TEXT,
+            project_name TEXT,
+            thickness REAL,
+            length REAL,
+            width REAL,
+            qr_code TEXT,
+            snapshot TEXT,
+            latitude REAL,
+            longitude REAL,
+            rack INTEGER,
+            shelf INTEGER,
+            quantity REAL,
+            price REAL,
+            stock_date TEXT,
+            added_by TEXT
+        )
     """)
-
-    # Check if column exists (for old DB)
-    cursor.execute("PRAGMA table_info(inventory)")
-    columns = [col[1] for col in cursor.fetchall()]
-
-    if "added_by" not in columns:
-        cursor.execute("ALTER TABLE inventory ADD COLUMN added_by TEXT")
 
     conn.commit()
     conn.close()
-    cursor.execute("PRAGMA table_info(inventory)")
-columns = [col[1] for col in cursor.fetchall()]
-
-if "added_by" not in columns:
-    cursor.execute("ALTER TABLE inventory ADD COLUMN added_by TEXT")
 
 def append_stock(selected_row, source, vendor_name, make,
                  vehicle_number, invoice_date, project_name,
@@ -220,7 +207,11 @@ def load_stock_data():
 def delete_stock_row(row_id):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM inventory WHERE id = ?", (row_id,))
+    cursor.execute("""
+DELETE FROM inventory 
+WHERE id = ? 
+AND (added_by = ? OR ? = 'admin')
+""", (row_id, st.session_state.username, st.session_state.role))
     conn.commit()
     conn.close()
 
@@ -296,33 +287,33 @@ with col2:
 #----------Admin User Creation Panel----------
 
 if st.session_state.role == "admin":
+
     st.sidebar.markdown("### 👨‍💼 Admin Panel")
 
-  # ---------------- CREATE USER ----------------
+    # ---------------- CREATE USER ----------------
     new_user = st.sidebar.text_input("New Username")
 
-   if st.sidebar.button("Create User"):
+    if st.sidebar.button("Create User"):
 
-    if not new_user.strip():
-        st.sidebar.error("Username cannot be empty")
-        st.stop()
+        if not new_user.strip():
+            st.sidebar.error("Username cannot be empty")
+        else:
+            default_password = hashlib.sha256("123456".encode()).hexdigest()
 
-    default_password = hashlib.sha256("123456".encode()).hexdigest()
+            conn = sqlite3.connect(DB_FILE)
+            cursor = conn.cursor()
 
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
+            try:
+                cursor.execute("""
+                    INSERT INTO users (username, password, role, must_change_password)
+                    VALUES (?, ?, ?, ?)
+                """, (new_user, default_password, "user", 1))
+                conn.commit()
+                st.sidebar.success("User created! Default password: 123456")
+            except:
+                st.sidebar.error("User already exists")
 
-    try:
-        cursor.execute("""
-            INSERT INTO users (username, password, role, must_change_password)
-            VALUES (?, ?, ?, ?)
-        """, (new_user, default_password, "user", 1))
-        conn.commit()
-        st.sidebar.success("User created! Default password: 123456")
-    except:
-        st.sidebar.error("User already exists")
-
-    conn.close()
+            conn.close()
 
     # ---------------- USER MANAGEMENT ----------------
     st.subheader("👤 User Management")
