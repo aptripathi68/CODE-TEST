@@ -593,7 +593,8 @@ if st.button("➕ Add Stock"):
         st.error("❌ Quantity and Price must be greater than 0")
     else:
         # --- Clean selected_row values ---
-        for col in ["Item Master ID", "Item Description", "Grade Name", "Group1 Name", "Group2 Name", "Section Name", "Unit Wt. (kg/m)"]:
+        for col in ["Item Master ID", "Item Description", "Grade Name", 
+                    "Group1 Name", "Group2 Name", "Section Name", "Unit Wt. (kg/m)"]:
             selected_row[col] = clean_value(selected_row[col])
 
         # Get latest QR
@@ -603,7 +604,7 @@ if st.button("➕ Add Stock"):
         snapshot_path = None
         if snapshot:
             from datetime import datetime
-            os.makedirs("images", exist_ok=True)
+            os.makedirs("images", exist_ok=True)  # ensure folder exists
             if qr_code:
                 safe_qr = qr_code.strip().replace("/", "_").replace("\\", "_").replace(" ", "_").replace(":", "_")
                 snapshot_path = f"images/{safe_qr}_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg"
@@ -624,7 +625,16 @@ if st.button("➕ Add Stock"):
                 quantity, price, stock_date,
                 st.session_state.get("username")
             )
+            # Clear QR & GPS to prevent duplicates
+            st.session_state.pop("qr_value", None)
+            st.session_state.pop("gps_value", None)
+
             st.success("✅ Stock entry successful!")
+
+            # Reload stock after adding
+            stock_df = load_stock_data()
+            st.rerun()
+
         except Exception as e:
             st.error(f"❌ Failed to add stock: {e}")
 
