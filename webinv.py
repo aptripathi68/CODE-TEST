@@ -638,31 +638,33 @@ if st.button("➕ Add Stock"):
                 f.write(snapshot.getbuffer())
 
         # Insert into database (ALWAYS inside button block)
-        append_stock(
-    selected_row,
-    source,
-    vendor_name,
-    make,
-    vehicle_number,
-    invoice_date,
-    project_name,
-    thickness,
-    length,
-    width,
-    qr_code if qr_code else None,
-    snapshot_path,
-    latitude,
-    longitude,
-    rack,
-    shelf,
-    quantity,
-    price,
-    stock_date,
-    st.session_state.get("username")
-)
-
-        st.success("✅ Stock entry successful!")
-
+        try:
+            append_stock(
+                selected_row,
+                source,
+                vendor_name,
+                make,
+                vehicle_number,
+                invoice_date,
+                project_name,
+                thickness,
+                length,
+                width,
+                qr_code if qr_code else None,
+                snapshot_path,
+                latitude,
+                longitude,
+                rack,
+                shelf,
+                quantity,
+                price,
+                stock_date,
+                st.session_state.get("username")
+            )
+            st.success("✅ Stock entry successful!")
+        except Exception as e:
+            st.error(f"❌ Failed to add stock: {e}")
+            
         # Reset QR & GPS to prevent repeat
         st.session_state.pop("qr_value", None)
         st.session_state.pop("gps_value", None)
