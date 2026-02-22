@@ -597,9 +597,9 @@ price = st.number_input("Enter Price per unit", min_value=0.0, step=0.01, value=
 st.markdown("### 📸 Item Snapshot (Optional)")
 snapshot = st.camera_input("Take Snapshot")
 
-# Add stock button
+# ---------- Add Stock Button & Reset Fields ----------
 if st.button("➕ Add Stock"):
-    if quantity <= 0 or price <= 0:
+    if st.session_state["quantity"] <= 0 or st.session_state["price"] <= 0:
         st.error("❌ Quantity and Price must be greater than 0")
     else:
         # Clean selected_row values
@@ -623,21 +623,43 @@ if st.button("➕ Add Stock"):
         # Insert into DB
         try:
             append_stock(
-                selected_row, source, vendor_name, make,
-                vehicle_number, invoice_date, project_name,
-                thickness, length, width,
-                qr_code, snapshot_path,
-                latitude, longitude,
-                rack, shelf,
-                quantity, price, stock_date,
+                selected_row, 
+                st.session_state["source"], 
+                st.session_state["vendor_name"], 
+                st.session_state["make"],
+                st.session_state["vehicle_number"], 
+                invoice_date, 
+                st.session_state["project_name"],
+                st.session_state["thickness"], 
+                st.session_state["length"], 
+                st.session_state["width"],
+                qr_code, 
+                snapshot_path,
+                latitude, 
+                longitude,
+                rack, 
+                shelf,
+                st.session_state["quantity"], 
+                st.session_state["price"], 
+                stock_date,
                 st.session_state.get("username")
             )
 
-            # Clear QR & GPS after insert
-            st.session_state.pop("qr_value", None)
-            st.session_state.pop("gps_value", None)
-
-            st.success("✅ Stock entry successful!")
+            # Clear QR, GPS & input fields for fresh entry
+            st.session_state["thickness"] = 0.0
+            st.session_state["length"] = 0.0
+            st.session_state["width"] = 0.0
+            st.session_state["vendor_name"] = ""
+            st.session_state["make"] = ""
+            st.session_state["vehicle_number"] = ""
+            st.session_state["project_name"] = ""
+            st.session_state["source"] = "Spare RM"
+            st.session_state["quantity"] = 1.0
+            st.session_state["price"] = 0.0
+            st.session_state["qr_value"] = ""
+            st.session_state["gps_value"] = ""
+            
+            st.success("✅ Stock entry successful! Fields reset for fresh entry.")
             st.session_state["stock_added"] = True
 
         except Exception as e:
