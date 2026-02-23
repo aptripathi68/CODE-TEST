@@ -305,6 +305,25 @@ if st.session_state.get("must_change_password") == 1:
 
     st.stop()
 
+#----Company Name and Logo diaplay--------
+
+# ---------- COMPANY HEADER (TOP OF APP) ----------
+
+st.markdown("""
+    <div style='text-align: center;'>
+        <img src="data:image/jpeg;base64,{}" width="140">
+        <h1 style='margin-bottom:0;'>
+            Kalpadeep Industries Private Limited
+        </h1>
+        <p style='color: gray; margin-top:0; font-size:18px;'>
+            Inventory Management System
+        </p>
+    </div>
+""".format(
+    __import__("base64").b64encode(open("Kalpadeep Logo.jpeg", "rb").read()).decode()
+), unsafe_allow_html=True)
+
+st.markdown("---")
 #----Logout Button------------
 
 col1, col2 = st.columns([6,1])
