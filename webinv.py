@@ -1,6 +1,6 @@
 #----THE BELOW CODE SUCCESSFUL CAPTURES INVENTORY INPUT, GPS LOCATION, QR CODE, SNAPSHOT 
 #--AND
-#--Creation of multiple users possible
+#--Creation of multiple users possible with Logout facility
 
 
 
