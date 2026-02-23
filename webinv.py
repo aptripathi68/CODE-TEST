@@ -1,4 +1,6 @@
 #THE BELOW CODE SUCCESSFUL CAPTURES INVENTORY INPUT, GPS LOCATION, QR CODE, SNAPSHOT 
+AND
+Creation of multiple users possible
 
 
 
@@ -10,11 +12,6 @@ import csv
 import os
 import sqlite3
 import hashlib
-
-
-# ---------- Debug / Dev Mode ----------
-DEBUG_MODE = False  # Change to True to see insert debug info
-
 
 # ---------- Multi level  Authentication ----------
 
@@ -44,7 +41,7 @@ def check_login(username, password):
 
 
 # File paths
-DB_FILE = "inventory.db"
+STOCK_FILE = DB_FILE = "inventory.db"
 MASTER_FILE = "Item_master.xlsx"
 
 def initialize_users_table():
@@ -75,53 +72,49 @@ def initialize_users_table():
     conn.close()
 
 # ---------- Helper Functions ----------
-def clean_value(val):
-    if pd.isna(val):
-        return None
-    return val
+
 
 
 # ---------- INITIALIZE USERS TABLE ----------
 
-def initialize_database_safe():
+def initialize_database():
+    """Create inventory table if it doesn't exist."""
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-    
-    # Only create table if it doesn't exist
+
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS inventory (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            item_master_id TEXT,
-            item_description TEXT,
-            grade_name TEXT,
-            group1_name TEXT,
-            group2_name TEXT,
-            section_name TEXT,
-            unit_weight REAL,
-            source TEXT,
-            vendor_name TEXT,
-            make TEXT,
-            vehicle_number TEXT,
-            invoice_date TEXT,
-            project_name TEXT,
-            thickness REAL,
-            length REAL,
-            width REAL,
-            qr_code TEXT,
-            snapshot TEXT,
-            latitude REAL,
-            longitude REAL,
-            rack INTEGER,
-            shelf INTEGER,
-            quantity REAL,
-            price REAL,
-            stock_date TEXT,
-            added_by TEXT
-        )
-    """)
+    CREATE TABLE IF NOT EXISTS inventory (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        item_master_id TEXT,
+        item_description TEXT,
+        grade_name TEXT,
+        group1_name TEXT,
+        group2_name TEXT,
+        section_name TEXT,
+        unit_weight REAL,
+        source TEXT,
+        vendor_name TEXT,
+        make TEXT,
+        vehicle_number TEXT,
+        invoice_date TEXT,
+        project_name TEXT,
+        thickness REAL,
+        length REAL,
+        width REAL,
+        qr_code TEXT,
+        snapshot TEXT,
+        latitude REAL,
+        longitude REAL,
+        rack INTEGER,
+        shelf INTEGER,
+        quantity REAL,
+        price REAL,
+        stock_date TEXT
+    )
+""")
+
     conn.commit()
     conn.close()
-    
 
 def append_stock(selected_row, source, vendor_name, make,
                  vehicle_number, invoice_date, project_name,
@@ -129,108 +122,69 @@ def append_stock(selected_row, source, vendor_name, make,
                  qr_code, snapshot_path,
                  latitude, longitude,
                  rack, shelf,
-                 quantity, price, stock_date,
-                 added_by):
-
-    if not added_by:
-        added_by = ""
-
-    # Convert numpy types to Python native types
-    def to_native(val):
-        import numpy as np
-        if isinstance(val, (np.integer, np.int64)):
-            return int(val)
-        elif isinstance(val, (np.floating, np.float64)):
-            return float(val)
-        return val
-
-    insert_values = (
-        to_native(selected_row["Item Master ID"]),
-        to_native(selected_row["Item Description"]),
-        to_native(selected_row["Grade Name"]),
-        to_native(selected_row["Group1 Name"]),
-        to_native(selected_row["Group2 Name"]),
-        to_native(selected_row["Section Name"]),
-        to_native(selected_row["Unit Wt. (kg/m)"]),
-        to_native(source),
-        to_native(vendor_name),
-        to_native(make),
-        to_native(vehicle_number),
-        str(invoice_date) if invoice_date else None,
-        to_native(project_name),
-        to_native(thickness) if thickness is not None else None,
-        to_native(length) if length is not None else None,
-        to_native(width) if width is not None else None,
-        to_native(qr_code) if qr_code else None,
-        to_native(snapshot_path) if snapshot_path else None,
-        to_native(latitude) if latitude is not None else None,
-        to_native(longitude) if longitude is not None else None,
-        to_native(rack) if rack is not None else None,
-        to_native(shelf) if shelf is not None else None,
-        to_native(quantity) if quantity is not None else None,
-        to_native(price) if price is not None else None,
-        str(stock_date) if stock_date else None,
-        to_native(added_by) if added_by else ""
-    )
-
-
-# Function to reset input fields
-def reset_stock_inputs():
-    for key, default in {
-        "thickness": 0.0,
-        "length": 0.0,
-        "width": 0.0,
-        "vendor_name": "",
-        "make": "",
-        "vehicle_number": "",
-        "project_name": "",
-        "source": "Spare RM",
-        "quantity": 1.0,
-        "price": 0.0,
-        "qr_value": "",
-        "gps_value": ""
-    }.items():
-        st.session_state[key] = default
-    # Debug output
-    if DEBUG_MODE:
-        st.write("DEBUG INSERT VALUES (converted to native):", insert_values)
-
-    # Insert into DB (always)
+                 quantity, price, stock_date):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
+
     cursor.execute("""
-        INSERT INTO inventory (
-            item_master_id,
-            item_description,
-            grade_name,
-            group1_name,
-            group2_name,
-            section_name,
-            unit_weight,
-            source,
-            vendor_name,
-            make,
-            vehicle_number,
-            invoice_date,
-            project_name,
-            thickness,
-            length,
-            width,
-            qr_code,
-            snapshot,
-            latitude,
-            longitude,
-            rack,
-            shelf,
-            quantity,
-            price,
-            stock_date,
-            added_by
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, insert_values)
+INSERT INTO inventory (
+    item_master_id,
+    item_description,
+    grade_name,
+    group1_name,
+    group2_name,
+    section_name,
+    unit_weight,
+    source,
+    vendor_name,
+    make,
+    vehicle_number,
+    invoice_date,
+    project_name,
+    thickness,
+    length,
+    width,
+    qr_code,
+    snapshot,
+    latitude,
+    longitude,
+    rack,
+    shelf,
+    quantity,
+    price,
+    stock_date
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+""", (
+    selected_row["Item Master ID"],
+    selected_row["Item Description"],
+    selected_row["Grade Name"],
+    selected_row["Group1 Name"],
+    selected_row["Group2 Name"],
+    selected_row["Section Name"],
+    selected_row["Unit Wt. (kg/m)"],
+    source,
+    vendor_name,
+    make,
+    vehicle_number,
+    str(invoice_date),
+    project_name,
+    thickness,
+    length,
+    width,
+    qr_code,
+    snapshot_path,
+    latitude,
+    longitude,
+    rack,
+    shelf,
+    quantity,
+    price,
+    str(stock_date)
+))
+
     conn.commit()
     conn.close()
-                     
+
 def load_master_data():
     df = pd.read_excel(MASTER_FILE)
     df.columns = df.columns.str.strip()
@@ -248,24 +202,17 @@ def load_stock_data():
     return df
 
 
-def delete_stock_row(row_id, username, role):
+def delete_stock_row(row_id):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-
-    cursor.execute("""
-        DELETE FROM inventory 
-        WHERE id = ? 
-        AND (added_by = ? OR ? = 'admin')
-    """, (row_id, username, role))
-
+    cursor.execute("DELETE FROM inventory WHERE id = ?", (row_id,))
     conn.commit()
     conn.close()
 
 # Database initialization
-# Initialize database only if file does not exist
-if not os.path.exists(DB_FILE):
-    initialize_database_safe()
-    initialize_users_table()
+initialize_database()
+initialize_users_table()
+
 
 # ---------- Streamlit Interface ----------
 
@@ -333,94 +280,30 @@ with col2:
 
 #----------Admin User Creation Panel----------
 
-if st.session_state.get("role") == "admin":
-
+if st.session_state.role == "admin":
     st.sidebar.markdown("### 👨‍💼 Admin Panel")
 
-    # ---------------- CREATE USER ----------------
     new_user = st.sidebar.text_input("New Username")
+    if st.sidebar.button("Create User"):
 
-if st.sidebar.button("Create User"):
-    if not new_user.strip():
-        st.sidebar.error("Username cannot be empty")
-    else:
         default_password = hashlib.sha256("123456".encode()).hexdigest()
+
         conn = sqlite3.connect(DB_FILE)
         cursor = conn.cursor()
+
         try:
             cursor.execute("""
-                INSERT INTO users (username, password, role, must_change_password)
-                VALUES (?, ?, ?, ?)
-            """, (new_user, default_password, "user", 1))
+    INSERT INTO users (username, password, role, must_change_password)
+    VALUES (?, ?, ?, ?)
+""", (new_user, default_password, "user", 1))
             conn.commit()
             st.sidebar.success("User created! Default password: 123456")
-        except sqlite3.IntegrityError:
+
+        except:
             st.sidebar.error("User already exists")
+
         conn.close()
 
-    # ---------------- USER MANAGEMENT ----------------
-    st.subheader("👤 User Management")
-
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, username, role FROM users")
-    users = cursor.fetchall()
-    conn.close()
-
-    if users:
-
-        user_df = pd.DataFrame(users, columns=["ID", "Username", "Role"])
-        st.dataframe(user_df, use_container_width=True)
-
-        selected_user = st.selectbox(
-            "Select User",
-            user_df["Username"]
-        )
-
-        col1, col2 = st.columns(2)
-
-        # 🔑 RESET PASSWORD
-        with col1:
-            if st.button("🔑 Reset Password"):
-
-                default_password = hashlib.sha256("123456".encode()).hexdigest()
-
-                conn = sqlite3.connect(DB_FILE)
-                cursor = conn.cursor()
-
-                cursor.execute("""
-                    UPDATE users
-                    SET password = ?, must_change_password = 1
-                    WHERE username = ?
-                """, (default_password, selected_user))
-
-                conn.commit()
-                conn.close()
-
-                st.success("Password reset to default (123456).")
-                st.rerun()
-
-        # ❌ DELETE USER
-        with col2:
-            if st.button("❌ Delete User"):
-
-                if selected_user == "admin":
-                    st.error("Admin account cannot be deleted.")
-                elif selected_user == st.session_state.username:
-                    st.error("You cannot delete yourself.")
-                else:
-                    conn = sqlite3.connect(DB_FILE)
-                    cursor = conn.cursor()
-                    cursor.execute("DELETE FROM users WHERE username = ?", (selected_user,))
-                    conn.commit()
-                    conn.close()
-
-                    st.success("User deleted successfully.")
-                    st.rerun()
-
-    else:
-        st.info("No users found.")
-    
 
 st.title("📦 Stock Entry System")
 
@@ -454,39 +337,10 @@ selected_item_index = st.selectbox(
 
 selected_row = filtered_grade.loc[selected_item_index]
 
-# ---------- Initialize session state keys ----------
-for key, default in {
-    "thickness": 0.0,
-    "length": 0.0,
-    "width": 0.0,
-    "vendor_name": "",
-    "make": "",
-    "vehicle_number": "",
-    "project_name": "",
-    "source": "Spare RM",
-    "quantity": 1.0,
-    "price": 0.0,
-    "qr_value": "",
-    "gps_value": ""
-}.items():
-    if key not in st.session_state:
-        st.session_state[key] = default
-
-# ---------- Now define your stock entry input fields ----------
-thickness = st.number_input("Thickness", min_value=0.0, step=0.01, value=st.session_state["thickness"], key="thickness")
-length = st.number_input("Length (Meters)", min_value=0.0, step=0.01, value=st.session_state["length"], key="length")
-width = st.number_input("Width (Meters)", min_value=0.0, step=0.01, value=st.session_state["width"], key="width")
-
-vendor_name = st.text_input("Vendor Name", value=st.session_state["vendor_name"], key="vendor_name")
-make = st.text_input("Make", value=st.session_state["make"], key="make")
-vehicle_number = st.text_input("Vehicle Number", value=st.session_state["vehicle_number"], key="vehicle_number")
-project_name = st.text_input("Project Name", value=st.session_state["project_name"], key="project_name")
-
-source_options = ["Spare RM", "Project Inventory", "Off-Cut"]
-source = st.selectbox("Select Source", source_options, index=source_options.index(st.session_state["source"]), key="source")
-
-quantity = st.number_input("Enter Quantity", min_value=1.0, step=1.0, value=st.session_state["quantity"], key="quantity")
-price = st.number_input("Enter Price per unit", min_value=0.0, step=0.01, value=st.session_state["price"], key="price")
+# ---------- Dimension Fields ----------
+thickness = st.number_input("Thickness", value=None, placeholder="Enter thickness")
+length = st.number_input("Length (Meters)", value=None, placeholder="Enter length")
+width = st.number_input("Width (Meters)", value=None, placeholder="Enter width")
 
 
 # ---------- PROFESSIONAL QR SCANNER ----------
@@ -530,6 +384,7 @@ html5QrcodeScanner.render(onScanSuccess);
 
 components.html(qr_html, height=400)
 
+qr_code = st.session_state.get("qr_value")
     
 
 # ---------- GPS Location ----------
@@ -599,8 +454,8 @@ else:
     latitude, longitude = None, None
     
 # ---------- Rack & Shelf ----------
-rack = st.number_input("Rack Number", value=None, placeholder="Enter Rack Number")
-shelf = st.number_input("Shelf Number",value=None, placeholder="Enter Shelf Number")
+rack = st.number_input("Rack Number", min_value=0, step=1)
+shelf = st.number_input("Shelf Number", min_value=0, step=1)
 
 # Display item details
 st.write("**Item Details:**")
@@ -639,142 +494,142 @@ source = st.selectbox(
     "Select Source",
     source_options
 )
-quantity = st.number_input("Enter Quantity", min_value=1.0, step=1.0, value=1.0)
-price = st.number_input("Enter Price per unit", min_value=0.0, step=0.01, value=0.0)
+quantity = st.number_input("Enter Quantity", value=None, placeholder="Enter quantity")
+price = st.number_input("Enter Price per unit", value=None, placeholder="Enter price")
 st.markdown("### 📸 Item Snapshot (Optional)")
 snapshot = st.camera_input("Take Snapshot")
 
-# ---------- Add Stock Button & Reset Fields ----------
+# Add stock button
+import os
+
 if st.button("➕ Add Stock"):
-    if st.session_state["quantity"] <= 0 or st.session_state["price"] <= 0:
+
+    # Validate
+    if quantity is None or price is None or quantity <= 0 or price <= 0:
         st.error("❌ Quantity and Price must be greater than 0")
+
     else:
-        # Clean selected_row values
-        for col in ["Item Master ID", "Item Description", "Grade Name",
-                    "Group1 Name", "Group2 Name", "Section Name", "Unit Wt. (kg/m)"]:
-            selected_row[col] = clean_value(selected_row[col])
 
-        qr_code = st.session_state.get("qr_value")
-
-        # Save snapshot
         snapshot_path = None
-        if snapshot:
+
+        # Create images folder if not exists
+        if not os.path.exists("images"):
+            os.makedirs("images")
+
+        # Save snapshot only if taken
+        if snapshot is not None:
+
             from datetime import datetime
-            os.makedirs("images", exist_ok=True)
-            safe_name = qr_code.strip().replace("/", "_").replace("\\", "_")\
-                        .replace(" ", "_").replace(":", "_") if qr_code else "photo"
-            snapshot_path = f"images/{safe_name}_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg"
+
+            qr_value = st.session_state.get("qr_value")
+
+            if qr_value and isinstance(qr_value, str):
+
+                safe_qr = (
+                    qr_value.strip()
+                    .replace("/", "_")
+                    .replace("\\", "_")
+                    .replace(" ", "_")
+                    .replace(":", "_")
+                )
+
+                snapshot_path = f"images/{safe_qr}.jpg"
+
+            else:
+                timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+                snapshot_path = f"images/photo_{timestamp}.jpg"
+
             with open(snapshot_path, "wb") as f:
                 f.write(snapshot.getbuffer())
 
-            # Insert into DB
-            try:
-                append_stock(
-                    selected_row, 
-                    st.session_state["source"], 
-                    st.session_state["vendor_name"], 
-                    st.session_state["make"],
-                    st.session_state["vehicle_number"], 
-                    invoice_date, 
-                    st.session_state["project_name"],
-                    st.session_state["thickness"], 
-                    st.session_state["length"], 
-                    st.session_state["width"],
-                    qr_code, 
-                    snapshot_path,
-                    latitude, 
-                    longitude,
-                    rack, 
-                    shelf,
-                    st.session_state["quantity"], 
-                    st.session_state["price"], 
-                    stock_date,
-                    st.session_state.get("username")
-                )
-
-            # Clear QR, GPS & input fields for fresh entry
-           if st.button("➕ Add Stock"):
-    if st.session_state["quantity"] <= 0 or st.session_state["price"] <= 0:
-        st.error("❌ Quantity and Price must be greater than 0")
-    else:
-        # Insert into DB
-        try:
-            append_stock(
-                selected_row, 
-                st.session_state["source"], 
-                st.session_state["vendor_name"], 
-                st.session_state["make"],
-                st.session_state["vehicle_number"], 
-                invoice_date, 
-                st.session_state["project_name"],
-                st.session_state["thickness"], 
-                st.session_state["length"], 
-                st.session_state["width"],
-                st.session_state.get("qr_value"), 
-                snapshot_path,
-                latitude, 
-                longitude,
-                rack, 
-                shelf,
-                st.session_state["quantity"], 
-                st.session_state["price"], 
-                stock_date,
-                st.session_state.get("username")
-            )
-
-            # ✅ Reset all input fields safely
-            reset_stock_inputs()
-            
-            st.success("✅ Stock entry successful! Fields reset for fresh entry.")
-
-            # Refresh app to apply reset
-            st.experimental_rerun()
-
-        except Exception as e:
-            st.error(f"❌ Failed to add stock: {e}")
-            import traceback
-            st.error(traceback.format_exc())
-
-# ---------- Current Stock & Delete Section ----------
-if st.session_state.get("stock_added"):
-    stock_df = load_stock_data()
-    st.session_state["stock_added"] = False
-else:
-    stock_df = load_stock_data()
-
-st.subheader("📊 Current Stock")
-if not stock_df.empty:
-    st.dataframe(stock_df, use_container_width=True)
-
-    # 🔹 Single Row Delete (VISIBLE TO ALL)
-    st.subheader("🗑 Delete Single Stock Entry")
-    row_to_delete = st.selectbox(
-        "Select ID to Delete",
-        stock_df["id"]
-    )
-
-    if st.button("Delete Selected Entry"):
-        delete_stock_row(
-            row_to_delete,
-            st.session_state.get("username"),
-            st.session_state.get("role")
+        # Insert into database (ALWAYS inside button block)
+        append_stock(
+            selected_row,
+            source,
+            vendor_name,
+            make,
+            vehicle_number,
+            invoice_date,
+            project_name,
+            thickness,
+            length,
+            width,
+            qr_code if qr_code else None,
+            snapshot_path,
+            latitude,
+            longitude,
+            rack,
+            shelf,
+            quantity,
+            price,
+            stock_date
         )
-        st.success("✅ Entry deleted successfully")
+
+        st.success("✅ Stock entry successful!")
+
+        # Reset QR & GPS to prevent repeat
+        st.session_state.pop("qr_value", None)
+        st.session_state.pop("gps_value", None)
+
         st.rerun()
 
-    # 🔐 BULK DELETE (ADMIN ONLY)
-    if st.session_state.get("role") == "admin":
-        st.markdown("### 🚨 Bulk Delete (Admin Only)")
+
+    # ---------- Delete Section ----------
+
+# Display current stock
+st.subheader("📊 Current Stock")
+stock_df = load_stock_data()
+
+if not stock_df.empty:
+
+    display_df = stock_df.drop(columns=["item_master_id"], errors="ignore")
+    display_df.index = range(1, len(display_df) + 1)
+    st.dataframe(display_df)
+
+    # Export
+    import io
+    buffer = io.BytesIO()
+    display_df.to_excel(buffer, index=False, engine="openpyxl")
+    buffer.seek(0)
+
+    st.download_button(
+        label="📥 Download Stock as Excel",
+        data=buffer,
+        file_name="Current_Stock.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+    # 🔐 ADMIN DELETE SECTION
+    
+    if st.session_state.role == "admin":
+
+        st.markdown("### 🗑 Delete Stock Entry")
+
+        row_to_delete = st.selectbox(
+            "Select ID to Delete",
+            stock_df["id"]
+        )
+
+        if st.button("Delete Selected Entry"):
+            delete_stock_row(row_to_delete)
+            st.success("✅ Stock entry deleted successfully!")
+            st.rerun()
+
+        st.markdown("### 🗑 Bulk Delete (By ID Range)")
+
         min_id = int(stock_df["id"].min())
         max_id = int(stock_df["id"].max())
 
         col1, col2 = st.columns(2)
+
         with col1:
             start_id = st.number_input("From ID", min_value=min_id, max_value=max_id)
+
         with col2:
             end_id = st.number_input("To ID", min_value=min_id, max_value=max_id)
 
         if st.button("Delete Range"):
+
             if start_id > end_id:
                 st.error("Start ID cannot be greater than End ID")
             else:
@@ -786,7 +641,8 @@ if not stock_df.empty:
                 )
                 conn.commit()
                 conn.close()
-                st.success(f"✅ Deleted records from ID {start_id} to {end_id}")
+
+                st.success(f"Deleted records from ID {start_id} to {end_id}")
                 st.rerun()
 
 else:
