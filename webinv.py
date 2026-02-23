@@ -45,7 +45,7 @@ def check_login(username, password):
 
 
 # File paths
-DB_FILE = "inventory.db"
+DB_FILE = os.path.join(os.getcwd(), "inventory.db")
 MASTER_FILE = "Item_master.xlsx"
 
 def initialize_users_table():
