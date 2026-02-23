@@ -48,6 +48,8 @@ def check_login(username, password):
 DB_FILE = os.path.join(os.getcwd(), "inventory.db")
 MASTER_FILE = "Item_master.xlsx"
 
+
+
 def initialize_users_table():
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
@@ -88,6 +90,18 @@ def initialize_database_safe():
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     
+ # ALWAYS ensure tables exist (safe because of IF NOT EXISTS)
+
+initialize_users_table()
+initialize_database_safe()
+
+# ----- TEMP DEBUG (remove later) -----
+conn = sqlite3.connect(DB_FILE)
+cur = conn.cursor()
+cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
+st.write("DB Tables:", cur.fetchall())
+conn.close()
+# -------------------------------------
     # Only create table if it doesn't exist
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS inventory (
@@ -244,11 +258,6 @@ def delete_stock_row(row_id, username, role):
     conn.commit()
     conn.close()
 
-# Database initialization
-# Initialize database only if file does not exist
-
-    initialize_database_safe()
-    initialize_users_table()
 
 # ---------- Streamlit Interface ----------
 
@@ -314,8 +323,19 @@ with col2:
         st.rerun()
 
 
-# ---------- Admin Panel ----------
-if st.session_state.get("role") == "admin":
+# ---------- Admin Panel ---------- Temporary code for checking---- actual code-- if st.session_state.get("role") == "admin":
+    st.sidebar.markdown("### 👨‍💼 Admin Panel")
+            
+
+                                                #---------------------------------if st.session_state.get("role") == "admin":
+
+    # Debug DB tables safely
+    conn = sqlite3.connect(DB_FILE)
+    cur = conn.cursor()
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
+    st.write("DB Tables:", cur.fetchall())
+    conn.close()
+
     st.sidebar.markdown("### 👨‍💼 Admin Panel")
 
     # ---- Create User ----
