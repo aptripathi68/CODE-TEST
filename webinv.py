@@ -338,7 +338,7 @@ selected_item_index = st.selectbox(
 selected_row = filtered_grade.loc[selected_item_index]
 
 # ---------- Dimension Fields ----------
-thickness = st.number_input("Thickness", value=None, placeholder="Enter thickness")
+thickness = st.number_input("Thickness (mm)", value=None, placeholder="Enter thickness")
 length = st.number_input("Length (Meters)", value=None, placeholder="Enter length")
 width = st.number_input("Width (Meters)", value=None, placeholder="Enter width")
 
