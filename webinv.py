@@ -324,33 +324,34 @@ if st.session_state.get("role") == "admin":
     st.write("DB Tables:", cur.fetchall())
     conn.close()
 
-    st.sidebar.markdown("### 👨‍💼 Admin Panel")
-    
-    # ---- Create User ----
-    new_user = st.sidebar.text_input("New Username", key="new_user_name")
+   st.sidebar.markdown("### 👨‍💼 Admin Panel")
 
-    if st.sidebar.button("Create User", key="btn_create_user"):
-        if not new_user.strip():
-            st.sidebar.error("Username cannot be empty")
-        else:
-            default_password = hashlib.sha256("123456".encode()).hexdigest()
+# ---- Create User Form ----
+with st.sidebar.form("create_user_form", clear_on_submit=True):
+    new_user = st.text_input("New Username")
+    submitted = st.form_submit_button("Create User")
 
-            conn = sqlite3.connect(DB_FILE)
-            cursor = conn.cursor()
-            try:
-                cursor.execute(
-                    """
-                    INSERT INTO users (username, password, role, must_change_password)
-                    VALUES (?, ?, ?, ?)
-                    """,
-                    (new_user.strip(), default_password, "user", 1)
-                )
-                conn.commit()
-                st.sidebar.success("User created! Default password: 123456")
-            except sqlite3.IntegrityError:
-                st.sidebar.error("User already exists")
-            finally:
-                conn.close()
+if submitted:
+    if not new_user.strip():
+        st.sidebar.error("Username cannot be empty")
+    else:
+        default_password = hashlib.sha256("123456".encode()).hexdigest()
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                """
+                INSERT INTO users (username, password, role, must_change_password)
+                VALUES (?, ?, ?, ?)
+                """,
+                (new_user.strip(), default_password, "user", 1)
+            )
+            conn.commit()
+            st.sidebar.success("User created! Default password: 123456")
+        except sqlite3.IntegrityError:
+            st.sidebar.error("User already exists")
+        finally:
+            conn.close()
 
             # Clear the input after creation
             st.session_state["new_user_name"] = ""
