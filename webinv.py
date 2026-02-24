@@ -485,6 +485,14 @@ selected_row = filtered_grade.loc[selected_item_index]
 
 # ---------- QR SCANNER ----------
 st.markdown("### 📷 Scan QR Code")
+
+st.session_state.setdefault("reset_qr_gps", False)
+
+# ✅ If reset requested, do it BEFORE widgets are created
+if st.session_state["reset_qr_gps"]:
+    st.session_state["qr_value"] = ""
+    st.session_state["gps_value"] = ""
+    st.session_state["reset_qr_gps"] = False
 st.text_input("qr_value", key="qr_value", label_visibility="collapsed")
 
 qr_html = """
@@ -613,14 +621,12 @@ if submitted_stock:
     if quantity <= 0 or price <= 0:
         st.error("❌ Quantity and Price must be greater than 0")
     else:
-        # Clean selected_row values
         for col in ["Item Master ID", "Item Description", "Grade Name",
                     "Group1 Name", "Group2 Name", "Section Name", "Unit Wt. (kg/m)"]:
             selected_row[col] = clean_value(selected_row[col])
 
         qr_code = st.session_state.get("qr_value", "")
 
-        # Save snapshot
         snapshot_path = None
         if snapshot:
             (BASE_DIR / "images").mkdir(exist_ok=True)
@@ -649,19 +655,16 @@ if submitted_stock:
             )
 
             st.success("✅ Stock entry successful!")
-            st.session_state["stock_added"] = True
 
-            # Optional: clear QR/GPS also
-            st.session_state["qr_value"] = ""
-            st.session_state["gps_value"] = ""
-
+            # ✅ SAFE RESET
+            st.session_state["reset_qr_gps"] = True
             st.rerun()
 
         except Exception as e:
             st.error(f"❌ Failed to add stock: {e}")
             import traceback
             st.error(traceback.format_exc())
-            
+
 
 # ---------- Current Stock ----------
 stock_df = load_stock_data()
