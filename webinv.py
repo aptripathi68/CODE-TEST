@@ -482,10 +482,6 @@ selected_item_index = st.selectbox(
 
 selected_row = filtered_grade.loc[selected_item_index]
 
-# ---------- Dimension Fields (WITH KEYS so they can reset) ----------
-thickness = st.number_input("Thickness (mm)", value=None, placeholder="Enter thickness", key="thickness")
-length = st.number_input("Length (Meters)", value=None, placeholder="Enter length", key="length")
-width = st.number_input("Width (Meters)", value=None, placeholder="Enter width", key="width")
 
 # ---------- QR SCANNER ----------
 st.markdown("### 📷 Scan QR Code")
@@ -570,9 +566,6 @@ if gps_value and "," in gps_value:
 else:
     latitude, longitude = None, None
 
-# ---------- Rack & Shelf (WITH KEYS) ----------
-rack = st.number_input("Rack Number", value=None, placeholder="Enter Rack Number", key="rack")
-shelf = st.number_input("Shelf Number", value=None, placeholder="Enter Shelf Number", key="shelf")
 
 # Display item details
 st.write("**Item Details:**")
@@ -599,12 +592,12 @@ with st.form("stock_entry_form", clear_on_submit=True):
 
     # Select + numbers
     source = st.selectbox("Select Source", ["Spare RM", "Project Inventory", "Off-Cut"])
-    thickness = st.number_input("Thickness (mm)", value=0.0)
-    length = st.number_input("Length (Meters)", value=0.0)
-    width = st.number_input("Width (Meters)", value=0.0)
+    thickness = st.number_input("Thickness (mm)", value=None, placeholder="Enter thickness", key="thickness")
+    length = st.number_input("Length (Meters)", value=None, placeholder="Enter length", key="length")
+    width = st.number_input("Width (Meters)", value=None, placeholder="Enter width", key="width")
 
-    rack = st.number_input("Rack Number", value=0)
-    shelf = st.number_input("Shelf Number", value=0)
+    rack = st.number_input("Rack Number", value=None, placeholder="Enter Rack Number", key="rack")
+    shelf = st.number_input("Shelf Number", value=None, placeholder="Enter Shelf Number", key="shelf")
 
     quantity = st.number_input("Enter Quantity", value=0.0)
     price = st.number_input("Enter Price per unit", value=0.0)
