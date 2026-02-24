@@ -668,43 +668,7 @@ if submitted_stock:
             st.error(f"❌ Failed to add stock: {e}")
             import traceback
             st.error(traceback.format_exc())
-
-        # Save snapshot
-        snapshot_path = None
-        if snapshot:
-            (BASE_DIR / "images").mkdir(exist_ok=True)
-            safe_name = (
-                qr_code.strip()
-                .replace("/", "_").replace("\\", "_")
-                .replace(" ", "_").replace(":", "_")
-            ) if qr_code else "photo"
-            snapshot_path = str(BASE_DIR / "images" / f"{safe_name}_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg")
-            with open(snapshot_path, "wb") as f:
-                f.write(snapshot.getbuffer())
-
-        try:
-            append_stock(
-                selected_row, source, vendor_name, make,
-                vehicle_number, invoice_date, project_name,
-                thickness, length, width,
-                qr_code, snapshot_path,
-                latitude, longitude,
-                rack, shelf,
-                quantity, price, stock_date,
-                st.session_state.get("username")
-            )
-
-            st.success("✅ Stock entry successful!")
-            st.session_state["stock_added"] = True
-
-            # reset all fields for fresh entry
-            reset_entry_fields()
-            st.rerun()
-
-        except Exception as e:
-            st.error(f"❌ Failed to add stock: {e}")
-            import traceback
-            st.error(traceback.format_exc())
+            
 
 # ---------- Current Stock ----------
 stock_df = load_stock_data()
