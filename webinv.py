@@ -324,6 +324,8 @@ st.session_state.setdefault("rack", None)
 st.session_state.setdefault("shelf", None)
 st.session_state.setdefault("quantity", None)
 st.session_state.setdefault("price", None)
+st.session_state.setdefault("entry_cycle", 0)      # changes after every stock entry
+st.session_state.setdefault("reset_qr_gps", False) # request reset before widgets
 
 # ---------- COMPANY HEADER (SHOW ALWAYS, EVEN BEFORE LOGIN) ----------
 render_public_header()
@@ -486,39 +488,58 @@ selected_row = filtered_grade.loc[selected_item_index]
 # ---------- QR SCANNER ----------
 st.markdown("### 📷 Scan QR Code")
 
-st.session_state.setdefault("reset_qr_gps", False)
-
-# ✅ If reset requested, do it BEFORE widgets are created
+# If reset requested, do it BEFORE widgets are created
 if st.session_state["reset_qr_gps"]:
     st.session_state["qr_value"] = ""
     st.session_state["gps_value"] = ""
     st.session_state["reset_qr_gps"] = False
+
+# keep qr_value widget
 st.text_input("qr_value", key="qr_value", label_visibility="collapsed")
 
-qr_html = """
+# force remount by changing reader id each cycle
+cycle = st.session_state["entry_cycle"]
+reader_id = f"reader_{cycle}"
+
+qr_html = f"""
 <script src="https://unpkg.com/html5-qrcode"></script>
-<div id="reader" style="width:300px;"></div>
+
+<div id="{reader_id}" style="width:300px;"></div>
+
 <script>
-function onScanSuccess(decodedText) {
-    const streamlitDoc = window.parent.document;
-    const input = streamlitDoc.querySelector('input[aria-label="qr_value"]');
-    if (input){
-        input.value = decodedText;
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-}
-let html5QrcodeScanner = new Html5QrcodeScanner(
-    "reader",
-    {
-        fps: 10,
-        qrbox: 250,
-        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-        videoConstraints: { facingMode: { exact: "environment" } }
-    }
-);
-html5QrcodeScanner.render(onScanSuccess);
+(function() {{
+    const el = document.getElementById("{reader_id}");
+    if(!el) return;
+
+    function onScanSuccess(decodedText) {{
+        const streamlitDoc = window.parent.document;
+        const input = streamlitDoc.querySelector('input[aria-label="qr_value"]');
+        if (input) {{
+            input.value = decodedText;
+            input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+        }}
+    }}
+
+    try {{
+        let scanner = new Html5QrcodeScanner(
+            "{reader_id}",
+            {{
+                fps: 10,
+                qrbox: 250,
+                supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+                videoConstraints: {{ facingMode: "environment" }}
+            }}
+        );
+        scanner.render(onScanSuccess);
+    }} catch(e) {{
+        console.log("QR scanner init failed:", e);
+    }}
+}})();
 </script>
+
+<!-- nonce:{cycle} -->
 """
+
 components.html(qr_html, height=400)
 
 # ---------- GPS ----------
@@ -565,7 +586,7 @@ font-size:16px;">
 📍 Capture GPS Location
 </button>
 """
-components.html(gps_html, height=90)
+components.html(gps_html + f"<!-- nonce:{st.session_state['entry_cycle']} -->", height=90)
 
 gps_value = st.session_state.get("gps_value")
 if gps_value and "," in gps_value:
@@ -588,18 +609,16 @@ st.write({
 # --- STOCK ENTRY FORM (clears inputs automatically) ---
 with st.form("stock_entry_form", clear_on_submit=True):
 
-    # Dates
     stock_date = st.date_input("📅 Select Stock Entry Date", value=date.today())
     invoice_date = st.date_input("📅 Select Invoice Date", value=date.today())
 
-    # Text inputs
     vendor_name = st.text_input("Vendor Name")
     make = st.text_input("Make")
     vehicle_number = st.text_input("Vehicle Number")
     project_name = st.text_input("Project Name")
 
-    # Select + numbers
     source = st.selectbox("Select Source", ["Spare RM", "Project Inventory", "Off-Cut"])
+
     thickness = st.number_input("Thickness (mm)", value=None, placeholder="Enter thickness", key="thickness")
     length = st.number_input("Length (Meters)", value=None, placeholder="Enter length", key="length")
     width = st.number_input("Width (Meters)", value=None, placeholder="Enter width", key="width")
@@ -611,7 +630,7 @@ with st.form("stock_entry_form", clear_on_submit=True):
     price = st.number_input("Enter Price per unit", value=0.0)
 
     st.markdown("### 📸 Item Snapshot (Optional)")
-    snapshot = st.camera_input("Take Snapshot")
+    snapshot = st.camera_input("Take Snapshot", key=f"snapshot_{st.session_state['entry_cycle']}")
 
     submitted_stock = st.form_submit_button("➕ Add Stock")
 
@@ -655,16 +674,20 @@ if submitted_stock:
             )
 
             st.success("✅ Stock entry successful!")
+            st.session_state["stock_added"] = True
 
-            # ✅ SAFE RESET
+            # request QR/GPS reset safely for next run
             st.session_state["reset_qr_gps"] = True
+
+            # force remount of QR + Snapshot next run
+            st.session_state["entry_cycle"] += 1
+
             st.rerun()
 
         except Exception as e:
             st.error(f"❌ Failed to add stock: {e}")
             import traceback
             st.error(traceback.format_exc())
-
 
 # ---------- Current Stock ----------
 stock_df = load_stock_data()
