@@ -300,32 +300,6 @@ def delete_stock_row(row_id, username, role):
     conn.close()
 
 
-# ---------- Reset fields after Add Stock ----------
-def reset_entry_fields():
-    st.session_state["vendor_name"] = ""
-    st.session_state["make"] = ""
-    st.session_state["vehicle_number"] = ""
-    st.session_state["project_name"] = ""
-
-    st.session_state["thickness"] = None
-    st.session_state["length"] = None
-    st.session_state["width"] = None
-
-    st.session_state["rack"] = None
-    st.session_state["shelf"] = None
-
-    st.session_state["quantity"] = None
-    st.session_state["price"] = None
-
-    st.session_state["source"] = "Spare RM"
-    st.session_state["stock_date"] = date.today()
-    st.session_state["invoice_date"] = date.today()
-
-    # IMPORTANT: do NOT pop widget keys; set values instead
-    st.session_state["qr_value"] = ""
-    st.session_state["gps_value"] = ""
-
-
 # ---------- SESSION STATE DEFAULTS ----------
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
@@ -609,25 +583,7 @@ st.write({
     "Unit Weight (kg/m)": selected_row["Unit Wt. (kg/m)"]
 })
 
-# Dates (WITH KEYS)
-stock_date = st.date_input("📅 Select Stock Entry Date", key="stock_date")
-
-# Inputs (WITH KEYS)
-vendor_name = st.text_input("Vendor Name", key="vendor_name")
-make = st.text_input("Make", key="make")
-vehicle_number = st.text_input("Vehicle Number", key="vehicle_number")
-invoice_date = st.date_input("📅 Select Invoice Date", key="invoice_date")
-project_name = st.text_input("Project Name", key="project_name")
-
-source = st.selectbox("Select Source", ["Spare RM", "Project Inventory", "Off-Cut"], key="source")
-quantity = st.number_input("Enter Quantity", value=None, placeholder="Enter Quantity in Numbers", key="quantity")
-price = st.number_input("Enter Price per unit", value=None, placeholder="Enter Price", key="price")
-
-st.markdown("### 📸 Item Snapshot (Optional)")
-snapshot = st.camera_input("Take Snapshot")
-
-# ---------- Add stock ----------
-if st.button("➕ Add Stock"):
+with st.form("stock_entry_form", clear_on_submit=True):
     if quantity is None or price is None or quantity <= 0 or price <= 0:
         st.error("❌ Quantity and Price must be greater than 0")
     else:
