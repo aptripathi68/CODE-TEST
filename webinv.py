@@ -45,10 +45,10 @@ def render_public_header():
 
         st.markdown(
             """
-            <div style='text-align:center;
-                        font-size:18px;
-                        font-weight:500;
-                        margin-top:8px;'>
+            <div style='text-align:left;
+                        font-size:22px;
+                        font-weight:700;
+                        margin-top:4px;'>
                 KALPADEEP INDUSTRIES PVT LTD
             </div>
             """,
@@ -59,8 +59,8 @@ def render_public_header():
             """
             <div style='text-align:left;
                         color:#B87333;
-                        font-size:22px;
-                        font-weight:700;
+                        font-size:18px;
+                        font-weight:500;
                         letter-spacing:1px;
                         margin-top:4px;'>
                 Inventory Management System
