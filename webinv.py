@@ -362,7 +362,7 @@ render_public_header()
 
 # ---------- Login ----------
 if not st.session_state["logged_in"]:
-    st.title("🔐 Login Required")
+   # st.title("🔐 Login Required")
 
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
