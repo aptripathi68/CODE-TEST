@@ -36,21 +36,19 @@ def img_to_base64(path: Path):
 def render_public_header():
     company_logo_path = BASE_DIR / "Kalpadeep Logo.jpg"
 
-    col1, col2 = st.columns([1, 3], vertical_alignment="center")
+    # Center Logo
+    col1, col2, col3 = st.columns([1, 2, 1])
 
-    # LEFT SIDE – Company Logo
-    with col1:
-        if company_logo_path.exists():
-            st.image(str(company_logo_path), width=170)
-
-    # RIGHT SIDE – Company Name & Subtitle
     with col2:
+        if company_logo_path.exists():
+            st.image(str(company_logo_path), width=180)
+
         st.markdown(
             """
-            <div style='text-align:left;
+            <div style='text-align:center;
                         font-size:18px;
                         font-weight:500;
-                        margin:0;'>
+                        margin-top:8px;'>
                 KALPADEEP INDUSTRIES PVT LTD
             </div>
             """,
@@ -59,9 +57,9 @@ def render_public_header():
 
         st.markdown(
             """
-            <div style='text-align:left;
+            <div style='text-align:center;
                         color:#B87333;
-                        font-size:20px;
+                        font-size:22px;
                         font-weight:700;
                         letter-spacing:1px;
                         margin-top:4px;'>
@@ -72,6 +70,7 @@ def render_public_header():
         )
 
     st.divider()
+    
 def render_sidebar_header():
     company_logo_path = BASE_DIR / "Kalpadeep Logo.jpg"
     if company_logo_path.exists():
