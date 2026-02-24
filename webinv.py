@@ -45,7 +45,7 @@ def render_public_header():
 
     with col2:
         st.markdown(
-            "<h2 style='text-align:center; margin:0;'>Kalpadeep Industries Private Limited</h2>",
+            "<h2 style='text-align:center; margin:0;'>KALPADEEP INDUSTRIES PVT LTD</h2>",
             unsafe_allow_html=True
         )
 
@@ -74,7 +74,7 @@ def render_sidebar_header():
     company_logo_path = BASE_DIR / "Kalpadeep Logo.jpg"
     if company_logo_path.exists():
         st.sidebar.image(str(company_logo_path), use_container_width=True)
-    st.sidebar.markdown("**Kalpadeep Industries Private Limited**")
+    st.sidebar.markdown("**KALPADEEP INDUSTRIES PVT LTD**")
     st.sidebar.caption("Inventory Management System")
     st.sidebar.markdown("---")
 
