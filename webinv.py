@@ -35,20 +35,21 @@ def img_to_base64(path: Path):
 
 def render_public_header():
     company_logo_path = BASE_DIR / "Kalpadeep Logo.jpg"
-    fabrication_logo_path = BASE_DIR / "Fabrication Logo.jpg"
 
-    col1, col2, col3 = st.columns([1.5, 2, 1.5], vertical_alignment="center")
+    col1, col2 = st.columns([1, 3], vertical_alignment="center")
 
+    # LEFT SIDE – Company Logo
     with col1:
-        if fabrication_logo_path.exists():
-            st.image(str(fabrication_logo_path), width=100)
+        if company_logo_path.exists():
+            st.image(str(company_logo_path), width=170)
 
+    # RIGHT SIDE – Company Name & Subtitle
     with col2:
         st.markdown(
             """
-            <div style='text-align:center;
-                        font-size:17px;
-                        font-weight:400;
+            <div style='text-align:left;
+                        font-size:18px;
+                        font-weight:500;
                         margin:0;'>
                 KALPADEEP INDUSTRIES PVT LTD
             </div>
@@ -58,24 +59,19 @@ def render_public_header():
 
         st.markdown(
             """
-            <div style='text-align:center;
+            <div style='text-align:left;
                         color:#B87333;
-                        font-size:15px;
-                        font-weight:400;
-                        letter-spacing:1.0px;
-                        margin-top:6px;'>
+                        font-size:20px;
+                        font-weight:700;
+                        letter-spacing:1px;
+                        margin-top:4px;'>
                 Inventory Management System
             </div>
             """,
             unsafe_allow_html=True
         )
 
-    with col3:
-        if company_logo_path.exists():
-            st.image(str(company_logo_path), width=100)
-
     st.divider()
-
 def render_sidebar_header():
     company_logo_path = BASE_DIR / "Kalpadeep Logo.jpg"
     if company_logo_path.exists():
