@@ -54,7 +54,7 @@ def render_public_header():
     </div>
     """,
     unsafe_allow_html=True
-    )
+        )
         st.markdown(
             """
             <div style='text-align:center;
