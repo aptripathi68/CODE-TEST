@@ -434,7 +434,7 @@ if st.session_state.get("role") == "admin":
             finally:
                 conn.close()
 
-            st.session_state["new_user_name"] = ""
+            
             st.rerun()
 
     st.sidebar.markdown("---")
