@@ -41,7 +41,7 @@ def render_public_header():
 
     with col1:
         if fabrication_logo_path.exists():
-            st.image(str(fabrication_logo_path), width=220)
+            st.image(str(fabrication_logo_path), width=150)
 
     with col2:
         st.markdown(
@@ -65,7 +65,7 @@ def render_public_header():
 
     with col3:
         if company_logo_path.exists():
-            st.image(str(company_logo_path), width=220)
+            st.image(str(company_logo_path), width=150)
 
     st.divider()
 
