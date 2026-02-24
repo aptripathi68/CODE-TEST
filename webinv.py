@@ -583,8 +583,41 @@ st.write({
     "Unit Weight (kg/m)": selected_row["Unit Wt. (kg/m)"]
 })
 
+
+# --- STOCK ENTRY FORM (clears inputs automatically) ---
 with st.form("stock_entry_form", clear_on_submit=True):
-    if quantity is None or price is None or quantity <= 0 or price <= 0:
+
+    # Dates
+    stock_date = st.date_input("📅 Select Stock Entry Date", value=date.today())
+    invoice_date = st.date_input("📅 Select Invoice Date", value=date.today())
+
+    # Text inputs
+    vendor_name = st.text_input("Vendor Name")
+    make = st.text_input("Make")
+    vehicle_number = st.text_input("Vehicle Number")
+    project_name = st.text_input("Project Name")
+
+    # Select + numbers
+    source = st.selectbox("Select Source", ["Spare RM", "Project Inventory", "Off-Cut"])
+    thickness = st.number_input("Thickness (mm)", value=0.0)
+    length = st.number_input("Length (Meters)", value=0.0)
+    width = st.number_input("Width (Meters)", value=0.0)
+
+    rack = st.number_input("Rack Number", value=0)
+    shelf = st.number_input("Shelf Number", value=0)
+
+    quantity = st.number_input("Enter Quantity", value=0.0)
+    price = st.number_input("Enter Price per unit", value=0.0)
+
+    st.markdown("### 📸 Item Snapshot (Optional)")
+    snapshot = st.camera_input("Take Snapshot")
+
+    submitted_stock = st.form_submit_button("➕ Add Stock")
+
+
+# --- Handle submit OUTSIDE the form block ---
+if submitted_stock:
+    if quantity <= 0 or price <= 0:
         st.error("❌ Quantity and Price must be greater than 0")
     else:
         # Clean selected_row values
@@ -593,6 +626,48 @@ with st.form("stock_entry_form", clear_on_submit=True):
             selected_row[col] = clean_value(selected_row[col])
 
         qr_code = st.session_state.get("qr_value", "")
+
+        # Save snapshot
+        snapshot_path = None
+        if snapshot:
+            (BASE_DIR / "images").mkdir(exist_ok=True)
+            safe_name = (
+                qr_code.strip()
+                .replace("/", "_").replace("\\", "_")
+                .replace(" ", "_").replace(":", "_")
+            ) if qr_code else "photo"
+
+            snapshot_path = str(
+                BASE_DIR / "images" / f"{safe_name}_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg"
+            )
+            with open(snapshot_path, "wb") as f:
+                f.write(snapshot.getbuffer())
+
+        try:
+            append_stock(
+                selected_row, source, vendor_name, make,
+                vehicle_number, invoice_date, project_name,
+                thickness, length, width,
+                qr_code, snapshot_path,
+                latitude, longitude,
+                rack, shelf,
+                quantity, price, stock_date,
+                st.session_state.get("username")
+            )
+
+            st.success("✅ Stock entry successful!")
+            st.session_state["stock_added"] = True
+
+            # Optional: clear QR/GPS also
+            st.session_state["qr_value"] = ""
+            st.session_state["gps_value"] = ""
+
+            st.rerun()
+
+        except Exception as e:
+            st.error(f"❌ Failed to add stock: {e}")
+            import traceback
+            st.error(traceback.format_exc())
 
         # Save snapshot
         snapshot_path = None
