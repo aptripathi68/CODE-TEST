@@ -53,9 +53,9 @@ def render_public_header():
             """
             <div style='text-align:center;
                         color:#B87333;
-                        font-size:28px;
+                        font-size:15px;
                         font-weight:700;
-                        letter-spacing:1.5px;
+                        letter-spacing:1.0px;
                         margin-top:6px;'>
                 Inventory Management System
             </div>
