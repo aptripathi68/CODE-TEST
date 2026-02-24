@@ -44,18 +44,19 @@ def render_public_header():
             st.image(str(fabrication_logo_path), width=150)
 
     with col2:
-st.markdown(
-    """
-    <div style='text-align:center;
-                font-size:17px;
-                font-weight:400;
-                margin:0;'>
-        KALPADEEP INDUSTRIES PVT LTD
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-st.markdown(
+        st.markdown(
+            """
+            <div style='text-align:center;
+                        font-size:17px;
+                        font-weight:400;
+                        margin:0;'>
+                KALPADEEP INDUSTRIES PVT LTD
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        st.markdown(
             """
             <div style='text-align:center;
                         color:#B87333;
@@ -67,14 +68,13 @@ st.markdown(
             </div>
             """,
             unsafe_allow_html=True
-)
+        )
 
     with col3:
         if company_logo_path.exists():
             st.image(str(company_logo_path), width=150)
 
     st.divider()
-
 
 def render_sidebar_header():
     company_logo_path = BASE_DIR / "Kalpadeep Logo.jpg"
