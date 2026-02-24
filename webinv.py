@@ -4,15 +4,55 @@
 
 
 
-
-
 import streamlit as st
 import pandas as pd
 import csv
 import os
 import sqlite3
 import hashlib
+import base64
 
+def img_to_base64(path):
+    try:
+        with open(path, "rb") as f:
+            return base64.b64encode(f.read()).decode()
+    except:
+        return None
+
+def render_public_header():
+
+    company_logo_path = "Kalpadeep Logo.jpg"
+    fabrication_logo_path = "Fabrication Logo.jpg"   # <-- change if name is different
+
+    company_b64 = img_to_base64(company_logo_path)
+    fab_b64 = img_to_base64(fabrication_logo_path)
+
+    st.markdown(
+        f"""
+        <div style="text-align:center; padding-top:10px;">
+            <div style="display:flex; justify-content:center; align-items:center; gap:40px; flex-wrap:wrap;">
+                
+                <div>
+                    {f'<img src="data:image/jpeg;base64,{fab_b64}" style="height:90px;">' if fab_b64 else '<div style="color:red;">Fabrication Logo Not Found</div>'}
+                </div>
+
+                <div>
+                    {f'<img src="data:image/jpeg;base64,{company_b64}" style="height:110px;">' if company_b64 else '<div style="color:red;">Company Logo Not Found</div>'}
+                </div>
+
+            </div>
+
+            <h1 style="margin:12px 0 0 0;">
+                Kalpadeep Industries Private Limited
+            </h1>
+
+            <p style="color:gray; margin:4px 0 0 0; font-size:18px;">
+                Inventory Management System
+            </p>
+        </div>
+        <hr/>
+        """,
+        unsafe_allow_html=True
 
 # ---------- Debug / Dev Mode ----------
 DEBUG_MODE = False  # Change to True to see insert debug info
@@ -253,6 +293,9 @@ def delete_stock_row(row_id, username, role):
 
 # ---------- Streamlit Interface ----------
 
+# ---------- COMPANY HEADER (SHOW ALWAYS, EVEN BEFORE LOGIN) ----------
+render_public_header()
+
 # ---------- Login System ----------
 
 if "logged_in" not in st.session_state:
@@ -306,25 +349,6 @@ if st.session_state.get("must_change_password") == 1:
 
     st.stop()
 
-#----Company Name and Logo diaplay--------
-
-# ---------- COMPANY HEADER (TOP OF APP) ----------
-
-st.markdown("""
-    <div style='text-align: center;'>
-        <img src="data:image/jpeg;base64,{}" width="140">
-        <h1 style='margin-bottom:0;'>
-            Kalpadeep Industries Private Limited
-        </h1>
-        <p style='color: gray; margin-top:0; font-size:18px;'>
-            Inventory Management System
-        </p>
-    </div>
-""".format(
-    __import__("base64").b64encode(open("Kalpadeep Logo.jpeg", "rb").read()).decode()
-), unsafe_allow_html=True)
-
-st.markdown("---")
 #----Logout Button------------
 
 col1, col2 = st.columns([6,1])
