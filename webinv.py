@@ -19,40 +19,48 @@ def img_to_base64(path):
     except:
         return None
 
+def img_to_base64(path):
+    try:
+        with open(path, "rb") as f:
+            return base64.b64encode(f.read()).decode()
+    except Exception:
+        return None
+
+
 def render_public_header():
 
     company_logo_path = "Kalpadeep Logo.jpg"
-    fabrication_logo_path = "Fabrication Logo.jpg"   # <-- change if name is different
+    fabrication_logo_path = "Fabrication Logo.jpg"
 
     company_b64 = img_to_base64(company_logo_path)
     fab_b64 = img_to_base64(fabrication_logo_path)
 
-    st.markdown(
-        f"""
-        <div style="text-align:center; padding-top:10px;">
-            <div style="display:flex; justify-content:center; align-items:center; gap:40px; flex-wrap:wrap;">
-                
-                <div>
-                    {f'<img src="data:image/jpeg;base64,{fab_b64}" style="height:90px;">' if fab_b64 else '<div style="color:red;">Fabrication Logo Not Found</div>'}
-                </div>
-
-                <div>
-                    {f'<img src="data:image/jpeg;base64,{company_b64}" style="height:110px;">' if company_b64 else '<div style="color:red;">Company Logo Not Found</div>'}
-                </div>
-
+    html_content = f"""
+    <div style="text-align:center; padding-top:10px;">
+        <div style="display:flex; justify-content:center; align-items:center; gap:40px; flex-wrap:wrap;">
+            
+            <div>
+                {f'<img src="data:image/jpeg;base64,{fab_b64}" style="height:90px;">' if fab_b64 else '<div style="color:red;">Fabrication Logo Not Found</div>'}
             </div>
 
-            <h1 style="margin:12px 0 0 0;">
-                Kalpadeep Industries Private Limited
-            </h1>
+            <div>
+                {f'<img src="data:image/jpeg;base64,{company_b64}" style="height:110px;">' if company_b64 else '<div style="color:red;">Company Logo Not Found</div>'}
+            </div>
 
-            <p style="color:gray; margin:4px 0 0 0; font-size:18px;">
-                Inventory Management System
-            </p>
         </div>
-        <hr/>
-        """,
-        unsafe_allow_html=True
+
+        <h1 style="margin:12px 0 0 0;">
+            Kalpadeep Industries Private Limited
+        </h1>
+
+        <p style="color:gray; margin:4px 0 0 0; font-size:18px;">
+            Inventory Management System
+        </p>
+    </div>
+    <hr/>
+    """
+
+    st.markdown(html_content, unsafe_allow_html=True)
 
 # ---------- Debug / Dev Mode ----------
 DEBUG_MODE = False  # Change to True to see insert debug info
