@@ -41,7 +41,7 @@ def render_public_header():
 
     with col2:
         if company_logo_path.exists():
-            st.image(str(company_logo_path), width=180)
+            st.image(str(company_logo_path), width=200)
 
         st.markdown(
             """
@@ -57,7 +57,7 @@ def render_public_header():
 
         st.markdown(
             """
-            <div style='text-align:center;
+            <div style='text-align:left;
                         color:#B87333;
                         font-size:22px;
                         font-weight:700;
