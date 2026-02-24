@@ -41,7 +41,7 @@ def render_public_header():
 
     with col1:
         if fabrication_logo_path.exists():
-            st.image(str(fabrication_logo_path), width=120)
+            st.image(str(fabrication_logo_path), width=250)
         else:
             st.caption("Fabrication Logo Not Found")
 
