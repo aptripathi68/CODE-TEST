@@ -51,9 +51,18 @@ def render_public_header():
             unsafe_allow_html=True
         )
         st.markdown(
-            "<div style='text-align:center; color:gray; font-size:16px;'>Inventory Management System</div>",
-            unsafe_allow_html=True
-        )
+    """
+    <div style='text-align:center;
+                color:#B87333;
+                font-size:26px;
+                font-weight:600;
+                letter-spacing:1px;
+                margin-top:6px;'>
+        Inventory Management System
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
     with col3:
         if company_logo_path.exists():
