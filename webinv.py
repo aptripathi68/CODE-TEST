@@ -44,7 +44,7 @@ def render_public_header():
             st.image(str(fabrication_logo_path), width=150)
 
     with col2:
-       st.markdown(
+st.markdown(
     """
     <div style='text-align:center;
                 font-size:17px;
@@ -54,8 +54,8 @@ def render_public_header():
     </div>
     """,
     unsafe_allow_html=True
-        )
-        st.markdown(
+)
+st.markdown(
             """
             <div style='text-align:center;
                         color:#B87333;
@@ -67,7 +67,7 @@ def render_public_header():
             </div>
             """,
             unsafe_allow_html=True
-        )
+)
 
     with col3:
         if company_logo_path.exists():
