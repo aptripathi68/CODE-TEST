@@ -44,11 +44,17 @@ def render_public_header():
             st.image(str(fabrication_logo_path), width=150)
 
     with col2:
-        st.markdown(
-            "<h2 style='text-align:center; margin:0;'>KALPADEEP INDUSTRIES PVT LTD</h2>",
-            unsafe_allow_html=True
-        )
-
+       st.markdown(
+    """
+    <div style='text-align:center;
+                font-size:17px;
+                font-weight:400;
+                margin:0;'>
+        KALPADEEP INDUSTRIES PVT LTD
+    </div>
+    """,
+    unsafe_allow_html=True
+)
         st.markdown(
             """
             <div style='text-align:center;
