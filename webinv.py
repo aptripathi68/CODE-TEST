@@ -41,7 +41,7 @@ def render_public_header():
 
     with col1:
         if fabrication_logo_path.exists():
-            st.image(str(fabrication_logo_path), width=150)
+            st.image(str(fabrication_logo_path), width=100)
 
     with col2:
         st.markdown(
@@ -61,7 +61,7 @@ def render_public_header():
             <div style='text-align:center;
                         color:#B87333;
                         font-size:15px;
-                        font-weight:700;
+                        font-weight:400;
                         letter-spacing:1.0px;
                         margin-top:6px;'>
                 Inventory Management System
@@ -72,7 +72,7 @@ def render_public_header():
 
     with col3:
         if company_logo_path.exists():
-            st.image(str(company_logo_path), width=150)
+            st.image(str(company_logo_path), width=100)
 
     st.divider()
 
