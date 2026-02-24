@@ -37,38 +37,35 @@ def render_public_header():
     company_logo_path = BASE_DIR / "Kalpadeep Logo.jpg"
     fabrication_logo_path = BASE_DIR / "Fabrication Logo.jpg"
 
-    col1, col2, col3 = st.columns([1, 2, 1])
+    col1, col2, col3 = st.columns([1.5, 2, 1.5], vertical_alignment="center")
 
     with col1:
         if fabrication_logo_path.exists():
-            st.image(str(fabrication_logo_path), width=250)
-        else:
-            st.caption("Fabrication Logo Not Found")
+            st.image(str(fabrication_logo_path), width=220)
 
     with col2:
         st.markdown(
             "<h2 style='text-align:center; margin:0;'>Kalpadeep Industries Private Limited</h2>",
             unsafe_allow_html=True
         )
+
         st.markdown(
-    """
-    <div style='text-align:center;
-                color:#B87333;
-                font-size:26px;
-                font-weight:600;
-                letter-spacing:1px;
-                margin-top:6px;'>
-        Inventory Management System
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+            """
+            <div style='text-align:center;
+                        color:#B87333;
+                        font-size:28px;
+                        font-weight:700;
+                        letter-spacing:1.5px;
+                        margin-top:6px;'>
+                Inventory Management System
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
     with col3:
         if company_logo_path.exists():
-            st.image(str(company_logo_path), width=140)
-        else:
-            st.caption("Company Logo Not Found")
+            st.image(str(company_logo_path), width=220)
 
     st.divider()
 
