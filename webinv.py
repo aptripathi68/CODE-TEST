@@ -627,8 +627,9 @@ with st.form("stock_entry_form", clear_on_submit=True):
     rack = st.number_input("Rack Number", value=None, placeholder="Enter Rack Number", key="rack")
     shelf = st.number_input("Shelf Number", value=None, placeholder="Enter Shelf Number", key="shelf")
 
-    quantity = st.number_input("Enter Quantity", value=0.0)
-    price = st.number_input("Enter Price per unit", value=0.0)
+thickness = st.number_input("Thickness (mm)", value=None, placeholder="Enter thickness", key="thickness")
+    quantity = st.number_input("Quantity",value=None, placeholder="Enter Quantity", key="quantity" )
+    price = st.number_input("Price per unit", value=None, placeholder="Enter Price per unit", key="price")
 
     st.markdown("### 📸 Item Snapshot (Optional)")
     snapshot = st.camera_input("Take Snapshot", key=f"snapshot_{st.session_state['entry_cycle']}")
