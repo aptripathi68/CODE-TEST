@@ -1,4 +1,4 @@
-#--------- CODE FOR SUCCESSFULLY CAPTUING INVENTORY INPUT, GPS LOCATION, QR CODE,,SNAPSHOT---------
+#--------- CODE SUCCESSFUL CAPTURES INVENTORY INPUT, GPS LOCATION, QR CODE,,SNAPSHOT---------
 #---------With all facilities without initialization of fields-----------------
 #---------Multiple User facility working and Visible for management in admin section--------
 
