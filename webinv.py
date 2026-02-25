@@ -627,7 +627,6 @@ with st.form("stock_entry_form", clear_on_submit=True):
     rack = st.number_input("Rack Number", value=None, placeholder="Enter Rack Number", key="rack")
     shelf = st.number_input("Shelf Number", value=None, placeholder="Enter Shelf Number", key="shelf")
 
-thickness = st.number_input("Thickness (mm)", value=None, placeholder="Enter thickness", key="thickness")
     quantity = st.number_input("Quantity",value=None, placeholder="Enter Quantity", key="quantity" )
     price = st.number_input("Price per unit", value=None, placeholder="Enter Price per unit", key="price")
 
