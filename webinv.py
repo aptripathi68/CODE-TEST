@@ -1,85 +1,25 @@
-#---------THE BELOW CODE SUCCESSFUL CAPTURES INVENTORY INPUT, GPS LOCATION, QR CODE, SNAPSHOT---------
-#---------With all facilities + header + proper field reset after Add Stock-----------------
+#--------- CODE FOR SUCCESSFULLY CAPTUING INVENTORY INPUT, GPS LOCATION, QR CODE,,SNAPSHOT---------
+#---------With all facilities without initialization of fields-----------------
 #---------Multiple User facility working and Visible for management in admin section--------
+
+
+
+
 
 import streamlit as st
 import pandas as pd
+import csv
 import os
 import sqlite3
 import hashlib
-import base64
-from datetime import date, datetime
-from pathlib import Path
-import streamlit.components.v1 as components
 
-# ---------- Page config (keep at very top) ----------
-st.set_page_config(page_title="Kalpadeep IMS", layout="wide")
-
-# ---------- Paths ----------
-BASE_DIR = Path(__file__).resolve().parent
-DB_FILE = str(BASE_DIR / "inventory.db")
-MASTER_FILE = str(BASE_DIR / "Item_master.xlsx")
 
 # ---------- Debug / Dev Mode ----------
 DEBUG_MODE = False  # Change to True to see insert debug info
 
 
-# ---------- Images / Header ----------
-def img_to_base64(path: Path):
-    try:
-        with open(path, "rb") as f:
-            return base64.b64encode(f.read()).decode()
-    except Exception:
-        return None
+# ---------- Multi level  Authentication ----------
 
-
-def render_public_header():
-    company_logo_path = BASE_DIR / "Kalpadeep Logo.jpg"
-
-    # Center Logo
-    col1, col2, col3 = st.columns([1, 2, 1])
-
-    with col2:
-        if company_logo_path.exists():
-            st.image(str(company_logo_path), width=200)
-
-        st.markdown(
-            """
-            <div style='text-align:left;
-                        font-size:22px;
-                        font-weight:700;
-                        margin-top:4px;'>
-                KALPADEEP INDUSTRIES PVT LTD
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-        st.markdown(
-            """
-            <div style='text-align:left;
-                        color:#B87333;
-                        font-size:18px;
-                        font-weight:500;
-                        letter-spacing:1px;
-                        margin-top:4px;'>
-                Inventory Management System
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    st.divider()
-def render_sidebar_header():
-    company_logo_path = BASE_DIR / "Kalpadeep Logo.jpg"
-    if company_logo_path.exists():
-        st.sidebar.image(str(company_logo_path), use_container_width=True)
-    st.sidebar.markdown("**KALPADEEP INDUSTRIES PVT LTD**")
-    st.sidebar.caption("Inventory Management System")
-    st.sidebar.markdown("---")
-
-
-# ---------- Multi level Authentication ----------
 def check_login(username, password):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
@@ -87,8 +27,8 @@ def check_login(username, password):
     hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
     cursor.execute("""
-        SELECT role, must_change_password
-        FROM users
+        SELECT role, must_change_password 
+        FROM users 
         WHERE username = ? AND password = ?
     """, (username, hashed_password))
 
@@ -103,6 +43,12 @@ def check_login(username, password):
         }
 
     return {"success": False}
+
+
+# File paths
+DB_FILE = os.path.join(os.getcwd(), "inventory.db")
+MASTER_FILE = "Item_master.xlsx"
+
 
 
 def initialize_users_table():
@@ -132,6 +78,14 @@ def initialize_users_table():
     conn.commit()
     conn.close()
 
+# ---------- Helper Functions ----------
+def clean_value(val):
+    if pd.isna(val):
+        return None
+    return val
+
+
+# ---------- INITIALIZE USERS TABLE ----------
 
 def initialize_database_safe():
     conn = sqlite3.connect(DB_FILE)
@@ -172,17 +126,9 @@ def initialize_database_safe():
     conn.commit()
     conn.close()
 
-
-def clean_value(val):
-    if pd.isna(val):
-        return None
-    return val
-
-
 # Ensure tables exist
 initialize_users_table()
 initialize_database_safe()
-
 
 def append_stock(selected_row, source, vendor_name, make,
                  vehicle_number, invoice_date, project_name,
@@ -199,9 +145,9 @@ def append_stock(selected_row, source, vendor_name, make,
     # Convert numpy types to Python native types
     def to_native(val):
         import numpy as np
-        if isinstance(val, (np.integer,)):
+        if isinstance(val, (np.integer, np.int64)):
             return int(val)
-        if isinstance(val, (np.floating,)):
+        elif isinstance(val, (np.floating, np.float64)):
             return float(val)
         return val
 
@@ -234,9 +180,11 @@ def append_stock(selected_row, source, vendor_name, make,
         to_native(added_by) if added_by else ""
     )
 
+    # Debug output
     if DEBUG_MODE:
-        st.write("DEBUG INSERT VALUES:", insert_values)
+        st.write("DEBUG INSERT VALUES (converted to native):", insert_values)
 
+    # Insert into DB (always)
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute("""
@@ -271,8 +219,7 @@ def append_stock(selected_row, source, vendor_name, make,
     """, insert_values)
     conn.commit()
     conn.close()
-
-
+                     
 def load_master_data():
     df = pd.read_excel(MASTER_FILE)
     df.columns = df.columns.str.strip()
@@ -283,112 +230,118 @@ def load_stock_data():
     conn = sqlite3.connect(DB_FILE)
     df = pd.read_sql_query("SELECT * FROM inventory", conn)
     conn.close()
+
     if not df.empty:
         df["total_value"] = df["quantity"] * df["price"]
+
     return df
 
 
 def delete_stock_row(row_id, username, role):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
+
     cursor.execute("""
-        DELETE FROM inventory
-        WHERE id = ?
+        DELETE FROM inventory 
+        WHERE id = ? 
         AND (added_by = ? OR ? = 'admin')
     """, (row_id, username, role))
+
     conn.commit()
     conn.close()
 
 
-# ---------- SESSION STATE DEFAULTS ----------
+# ---------- Streamlit Interface ----------
+
+# ---------- Login System ----------
+
 if "logged_in" not in st.session_state:
-    st.session_state["logged_in"] = False
+    st.session_state.logged_in = False
 
-if "stock_added" not in st.session_state:
-    st.session_state["stock_added"] = False
-
-# default widget keys (so reset works even first time)
-st.session_state.setdefault("qr_value", "")
-st.session_state.setdefault("gps_value", "")
-st.session_state.setdefault("vendor_name", "")
-st.session_state.setdefault("make", "")
-st.session_state.setdefault("vehicle_number", "")
-st.session_state.setdefault("project_name", "")
-st.session_state.setdefault("source", "Spare RM")
-st.session_state.setdefault("stock_date", date.today())
-st.session_state.setdefault("invoice_date", date.today())
-st.session_state.setdefault("thickness", None)
-st.session_state.setdefault("length", None)
-st.session_state.setdefault("width", None)
-st.session_state.setdefault("rack", None)
-st.session_state.setdefault("shelf", None)
-st.session_state.setdefault("quantity", None)
-st.session_state.setdefault("price", None)
-st.session_state.setdefault("entry_cycle", 0)      # changes after every stock entry
-st.session_state.setdefault("reset_qr_gps", False) # request reset before widgets
-
-# ---------- COMPANY HEADER (SHOW ALWAYS, EVEN BEFORE LOGIN) ----------
-render_public_header()
-
-# ---------- Login ----------
-if not st.session_state["logged_in"]:
-   # st.title("🔐 Login Required")
+if not st.session_state.logged_in:
+    st.title("🔐 Login Required")
 
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
 
     if st.button("Login"):
         result = check_login(username, password)
+
         if result["success"]:
-            st.session_state["logged_in"] = True
-            st.session_state["username"] = username
-            st.session_state["role"] = result["role"]
-            st.session_state["must_change_password"] = result["must_change_password"]
+            st.session_state.logged_in = True
+            st.session_state.username = username
+            st.session_state.role = result["role"]
+            st.session_state.must_change_password = result["must_change_password"]
             st.rerun()
         else:
             st.error("Invalid Username or Password")
 
     st.stop()
 
-# show sidebar header after login
-render_sidebar_header()
+#-------Force Password Change-----------
 
-# ---------- Force Password Change ----------
 if st.session_state.get("must_change_password") == 1:
     st.title("🔑 Change Default Password")
+
     new_password = st.text_input("New Password", type="password")
 
     if st.button("Update Password"):
         conn = sqlite3.connect(DB_FILE)
         cursor = conn.cursor()
+
         hashed = hashlib.sha256(new_password.encode()).hexdigest()
+
         cursor.execute("""
             UPDATE users
             SET password = ?, must_change_password = 0
             WHERE username = ?
-        """, (hashed, st.session_state["username"]))
+        """, (hashed, st.session_state.username))
+
         conn.commit()
         conn.close()
 
-        st.session_state["must_change_password"] = 0
+        st.session_state.must_change_password = 0
         st.success("Password updated successfully!")
         st.rerun()
 
     st.stop()
 
-# ---------- Logout ----------
-col1, col2 = st.columns([6, 1])
+#----Company Name and Logo diaplay--------
+
+# ---------- COMPANY HEADER (TOP OF APP) ----------
+
+st.markdown("""
+    <div style='text-align: center;'>
+        <img src="data:image/jpeg;base64,{}" width="140">
+        <h1 style='margin-bottom:0;'>
+            Kalpadeep Industries Private Limited
+        </h1>
+        <p style='color: gray; margin-top:0; font-size:18px;'>
+            Inventory Management System
+        </p>
+    </div>
+""".format(
+    __import__("base64").b64encode(open("Kalpadeep Logo.jpeg", "rb").read()).decode()
+), unsafe_allow_html=True)
+
+st.markdown("---")
+#----Logout Button------------
+
+col1, col2 = st.columns([6,1])
 with col2:
     if st.button("🚪 Logout"):
         st.session_state.clear()
         st.rerun()
 
+
 # ---------- Admin Panel ----------
 if st.session_state.get("role") == "admin":
+
     st.sidebar.markdown("### 👨‍💼 Admin Panel")
 
+    # Create User Form
     with st.sidebar.form("create_user_form", clear_on_submit=True):
-        new_user = st.text_input("New Username", key="new_user_name")
+        new_user = st.text_input("New Username")
         submitted = st.form_submit_button("Create User")
 
     if submitted:
@@ -399,10 +352,13 @@ if st.session_state.get("role") == "admin":
             conn = sqlite3.connect(DB_FILE)
             cursor = conn.cursor()
             try:
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO users (username, password, role, must_change_password)
                     VALUES (?, ?, ?, ?)
-                """, (new_user.strip(), default_password, "user", 1))
+                    """,
+                    (new_user.strip(), default_password, "user", 1)
+                )
                 conn.commit()
                 st.sidebar.success("User created! Default password: 123456")
             except sqlite3.IntegrityError:
@@ -410,12 +366,15 @@ if st.session_state.get("role") == "admin":
             finally:
                 conn.close()
 
-            
+            # Clear the input after creation
+            st.session_state["new_user_name"] = ""
             st.rerun()
 
     st.sidebar.markdown("---")
 
+    # ---- User Management (always visible for admin) ----
     st.subheader("👤 User Management")
+
     conn = sqlite3.connect(DB_FILE)
     user_df = pd.read_sql_query("SELECT id, username, role FROM users ORDER BY id", conn)
     conn.close()
@@ -425,26 +384,35 @@ if st.session_state.get("role") == "admin":
     else:
         st.dataframe(user_df, use_container_width=True)
 
-        selected_user = st.selectbox("Select User", user_df["username"], key="selected_user")
+        selected_user = st.selectbox(
+            "Select User",
+            user_df["username"],
+            key="selected_user"
+        )
 
-        c1, c2 = st.columns(2)
+        col1, col2 = st.columns(2)
 
-        with c1:
+        # Reset Password
+        with col1:
             if st.button("🔑 Reset Password", key="btn_reset_password"):
                 default_password = hashlib.sha256("123456".encode()).hexdigest()
                 conn = sqlite3.connect(DB_FILE)
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     UPDATE users
                     SET password = ?, must_change_password = 1
                     WHERE username = ?
-                """, (default_password, selected_user))
+                    """,
+                    (default_password, selected_user)
+                )
                 conn.commit()
                 conn.close()
                 st.success("Password reset to default (123456).")
                 st.rerun()
 
-        with c2:
+        # Delete User
+        with col2:
             if st.button("❌ Delete User", key="btn_delete_user"):
                 if selected_user == "admin":
                     st.error("Admin account cannot be deleted.")
@@ -458,24 +426,32 @@ if st.session_state.get("role") == "admin":
                     conn.close()
                     st.success("User deleted successfully.")
                     st.rerun()
+else:
+    # Non-admin: do NOT show admin tools
+    pass
 
+# Initialize stock file
 
-# ---------- Main Stock Entry UI ----------
+# Load master data
 master_df = load_master_data()
 
-# 1️⃣ Select Category
+# ---------- 1️⃣ Select Category ----------
 categories = sorted(master_df["Group2 Name"].dropna().unique())
 selected_category = st.selectbox("Select Category", categories)
 
-filtered_category = master_df[master_df["Group2 Name"] == selected_category]
+filtered_category = master_df[
+    master_df["Group2 Name"] == selected_category
+]
 
-# 2️⃣ Select Grade
+# ---------- 2️⃣ Select Grade ----------
 grades = sorted(filtered_category["Grade Name"].dropna().unique())
 selected_grade = st.selectbox("Select Grade", grades)
 
-filtered_grade = filtered_category[filtered_category["Grade Name"] == selected_grade]
+filtered_grade = filtered_category[
+    filtered_category["Grade Name"] == selected_grade
+]
 
-# 3️⃣ Select Item
+# ---------- 3️⃣ Select Item ----------
 selected_item_index = st.selectbox(
     "Select Item",
     filtered_grade.index,
@@ -484,77 +460,73 @@ selected_item_index = st.selectbox(
 
 selected_row = filtered_grade.loc[selected_item_index]
 
+# ---------- Dimension Fields ----------
+thickness = st.number_input("Thickness (mm)", value=None, placeholder="Enter thickness")
+length = st.number_input("Length (Meters)", value=None, placeholder="Enter length")
+width = st.number_input("Width (Meters)", value=None, placeholder="Enter width")
 
-# ---------- QR SCANNER ----------
+
+# ---------- PROFESSIONAL QR SCANNER ----------
+import streamlit.components.v1 as components
+
 st.markdown("### 📷 Scan QR Code")
 
-# If reset requested, do it BEFORE widgets are created
-if st.session_state["reset_qr_gps"]:
-    st.session_state["qr_value"] = ""
-    st.session_state["gps_value"] = ""
-    st.session_state["reset_qr_gps"] = False
-
-# keep qr_value widget
+# Hidden field to store scanned value
 st.text_input("qr_value", key="qr_value", label_visibility="collapsed")
 
-# force remount by changing reader id each cycle
-cycle = st.session_state["entry_cycle"]
-reader_id = f"reader_{cycle}"
-
-qr_html = f"""
+qr_html = """
 <script src="https://unpkg.com/html5-qrcode"></script>
 
-<div id="{reader_id}" style="width:300px;"></div>
+<div id="reader" style="width:300px;"></div>
 
 <script>
-(function() {{
-    const el = document.getElementById("{reader_id}");
-    if(!el) return;
+function onScanSuccess(decodedText) {
+    const streamlitDoc = window.parent.document;
+    const input = streamlitDoc.querySelector('input[aria-label="qr_value"]');
+    if (input){
+        input.value = decodedText;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+}
 
-    function onScanSuccess(decodedText) {{
-        const streamlitDoc = window.parent.document;
-        const input = streamlitDoc.querySelector('input[aria-label="qr_value"]');
-        if (input) {{
-            input.value = decodedText;
-            input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-        }}
-    }}
+let html5QrcodeScanner = new Html5QrcodeScanner(
+    "reader",
+    { 
+        fps: 10,
+        qrbox: 250,
+        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+        videoConstraints: {
+            facingMode: { exact: "environment" }
+        }
+    }
+);
 
-    try {{
-        let scanner = new Html5QrcodeScanner(
-            "{reader_id}",
-            {{
-                fps: 10,
-                qrbox: 250,
-                supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-                videoConstraints: {{ facingMode: "environment" }}
-            }}
-        );
-        scanner.render(onScanSuccess);
-    }} catch(e) {{
-        console.log("QR scanner init failed:", e);
-    }}
-}})();
+html5QrcodeScanner.render(onScanSuccess);
 </script>
-
-<!-- nonce:{cycle} -->
 """
 
 components.html(qr_html, height=400)
 
-# ---------- GPS ----------
+    
+
+# ---------- GPS Location ----------
+
 st.markdown("### 📍 Auto GPS Location")
+
 st.text_input("gps_value", key="gps_value", label_visibility="collapsed")
 
 gps_html = """
 <script>
 function getLocation() {
+
     if (!navigator.geolocation) {
         alert("Geolocation is not supported by this browser.");
         return;
     }
+
     navigator.geolocation.getCurrentPosition(
         function(position) {
+
             const lat = position.coords.latitude;
             const lon = position.coords.longitude;
             const loc = lat + "," + lon;
@@ -566,12 +538,18 @@ function getLocation() {
                 input.value = loc;
                 input.dispatchEvent(new Event('input', { bubbles: true }));
             }
+
             alert("Location Captured Successfully");
+
         },
         function(error) {
             alert("Error capturing location: " + error.message);
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        }
     );
 }
 </script>
@@ -586,15 +564,20 @@ font-size:16px;">
 📍 Capture GPS Location
 </button>
 """
-components.html(gps_html + f"<!-- nonce:{st.session_state['entry_cycle']} -->", height=90)
+
+components.html(gps_html, height=90)
 
 gps_value = st.session_state.get("gps_value")
+
 if gps_value and "," in gps_value:
     latitude, longitude = map(float, gps_value.split(","))
     st.success(f"📍 Location: {latitude}, {longitude}")
 else:
     latitude, longitude = None, None
-
+    
+# ---------- Rack & Shelf ----------
+rack = st.number_input("Rack Number", value=None, placeholder="Enter Rack Number")
+shelf = st.number_input("Shelf Number",value=None, placeholder="Enter Shelf Number")
 
 # Display item details
 st.write("**Item Details:**")
@@ -605,62 +588,63 @@ st.write({
     "Unit Weight (kg/m)": selected_row["Unit Wt. (kg/m)"]
 })
 
+from datetime import date
 
-# --- STOCK ENTRY FORM (clears inputs automatically) ---
-with st.form("stock_entry_form", clear_on_submit=True):
+# Date Input
+stock_date = st.date_input(
+    "📅 Select Stock Entry Date",
+    value=date.today()
+)
 
-    stock_date = st.date_input("📅 Select Stock Entry Date", value=date.today())
-    invoice_date = st.date_input("📅 Select Invoice Date", value=date.today())
+# Source, Quantity & Price input
+from datetime import date
 
-    vendor_name = st.text_input("Vendor Name")
-    make = st.text_input("Make")
-    vehicle_number = st.text_input("Vehicle Number")
-    project_name = st.text_input("Project Name")
+vendor_name = st.text_input("Vendor Name")
+make = st.text_input("Make")
+vehicle_number = st.text_input("Vehicle Number")
 
-    source = st.selectbox("Select Source", ["Spare RM", "Project Inventory", "Off-Cut"])
+invoice_date = st.date_input(
+    "📅 Select Invoice Date",
+    value=date.today()
+)
 
-    thickness = st.number_input("Thickness (mm)", value=None, placeholder="Enter thickness", key="thickness")
-    length = st.number_input("Length (Meters)", value=None, placeholder="Enter length", key="length")
-    width = st.number_input("Width (Meters)", value=None, placeholder="Enter width", key="width")
+project_name = st.text_input("Project Name")
 
-    rack = st.number_input("Rack Number", value=None, placeholder="Enter Rack Number", key="rack")
-    shelf = st.number_input("Shelf Number", value=None, placeholder="Enter Shelf Number", key="shelf")
+source_options = ["Spare RM", "Project Inventory", "Off-Cut"]
 
-    quantity = st.number_input("Enter Quantity", value=0.0)
-    price = st.number_input("Enter Price per unit", value=0.0)
+source = st.selectbox(
+    "Select Source",
+    source_options
+)
+quantity = st.number_input("Enter Quantity",value=None, placeholder="Enter Quantity in Numbers")
+price = st.number_input("Enter Price per unit", value=None, placeholder="Enter Price")
+st.markdown("### 📸 Item Snapshot (Optional)")
+snapshot = st.camera_input("Take Snapshot")
 
-    st.markdown("### 📸 Item Snapshot (Optional)")
-    snapshot = st.camera_input("Take Snapshot", key=f"snapshot_{st.session_state['entry_cycle']}")
-
-    submitted_stock = st.form_submit_button("➕ Add Stock")
-
-
-# --- Handle submit OUTSIDE the form block ---
-if submitted_stock:
+# Add stock button
+if st.button("➕ Add Stock"):
     if quantity <= 0 or price <= 0:
         st.error("❌ Quantity and Price must be greater than 0")
     else:
+        # Clean selected_row values
         for col in ["Item Master ID", "Item Description", "Grade Name",
                     "Group1 Name", "Group2 Name", "Section Name", "Unit Wt. (kg/m)"]:
             selected_row[col] = clean_value(selected_row[col])
 
-        qr_code = st.session_state.get("qr_value", "")
+        qr_code = st.session_state.get("qr_value")
 
+        # Save snapshot
         snapshot_path = None
         if snapshot:
-            (BASE_DIR / "images").mkdir(exist_ok=True)
-            safe_name = (
-                qr_code.strip()
-                .replace("/", "_").replace("\\", "_")
-                .replace(" ", "_").replace(":", "_")
-            ) if qr_code else "photo"
-
-            snapshot_path = str(
-                BASE_DIR / "images" / f"{safe_name}_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg"
-            )
+            from datetime import datetime
+            os.makedirs("images", exist_ok=True)
+            safe_name = qr_code.strip().replace("/", "_").replace("\\", "_")\
+                        .replace(" ", "_").replace(":", "_") if qr_code else "photo"
+            snapshot_path = f"images/{safe_name}_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg"
             with open(snapshot_path, "wb") as f:
                 f.write(snapshot.getbuffer())
 
+        # Insert into DB
         try:
             append_stock(
                 selected_row, source, vendor_name, make,
@@ -673,32 +657,35 @@ if submitted_stock:
                 st.session_state.get("username")
             )
 
+            # Clear QR & GPS after insert
+            st.session_state.pop("qr_value", None)
+            st.session_state.pop("gps_value", None)
+
             st.success("✅ Stock entry successful!")
             st.session_state["stock_added"] = True
-
-            # request QR/GPS reset safely for next run
-            st.session_state["reset_qr_gps"] = True
-
-            # force remount of QR + Snapshot next run
-            st.session_state["entry_cycle"] += 1
-
-            st.rerun()
 
         except Exception as e:
             st.error(f"❌ Failed to add stock: {e}")
             import traceback
             st.error(traceback.format_exc())
 
-# ---------- Current Stock ----------
-stock_df = load_stock_data()
-st.subheader("📊 Current Stock")
+# ---------- Current Stock & Delete Section ----------
+if st.session_state.get("stock_added"):
+    stock_df = load_stock_data()
+    st.session_state["stock_added"] = False
+else:
+    stock_df = load_stock_data()
 
+st.subheader("📊 Current Stock")
 if not stock_df.empty:
     st.dataframe(stock_df, use_container_width=True)
 
-    # Single Row Delete (VISIBLE TO ALL)
+    # 🔹 Single Row Delete (VISIBLE TO ALL)
     st.subheader("🗑 Delete Single Stock Entry")
-    row_to_delete = st.selectbox("Select ID to Delete", stock_df["id"])
+    row_to_delete = st.selectbox(
+        "Select ID to Delete",
+        stock_df["id"]
+    )
 
     if st.button("Delete Selected Entry"):
         delete_stock_row(
@@ -709,16 +696,16 @@ if not stock_df.empty:
         st.success("✅ Entry deleted successfully")
         st.rerun()
 
-    # Bulk Delete (ADMIN ONLY)
+    # 🔐 BULK DELETE (ADMIN ONLY)
     if st.session_state.get("role") == "admin":
         st.markdown("### 🚨 Bulk Delete (Admin Only)")
         min_id = int(stock_df["id"].min())
         max_id = int(stock_df["id"].max())
 
-        c1, c2 = st.columns(2)
-        with c1:
+        col1, col2 = st.columns(2)
+        with col1:
             start_id = st.number_input("From ID", min_value=min_id, max_value=max_id)
-        with c2:
+        with col2:
             end_id = st.number_input("To ID", min_value=min_id, max_value=max_id)
 
         if st.button("Delete Range"):
@@ -727,10 +714,14 @@ if not stock_df.empty:
             else:
                 conn = sqlite3.connect(DB_FILE)
                 cursor = conn.cursor()
-                cursor.execute("DELETE FROM inventory WHERE id BETWEEN ? AND ?", (start_id, end_id))
+                cursor.execute(
+                    "DELETE FROM inventory WHERE id BETWEEN ? AND ?",
+                    (start_id, end_id)
+                )
                 conn.commit()
                 conn.close()
                 st.success(f"✅ Deleted records from ID {start_id} to {end_id}")
                 st.rerun()
+
 else:
     st.info("No stock entries available.")
